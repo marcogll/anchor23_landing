@@ -1,0 +1,132 @@
+import { useEffect, useRef, useState } from 'react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { CheckCircle, MapPin } from 'lucide-react';
+import Navigation from '../sections/Navigation';
+import Footer from '../sections/Footer';
+import { useLenis } from '../hooks/useLenis';
+import { useLanguage } from '../hooks/useLanguage';
+
+gsap.registerPlugin(ScrollTrigger);
+
+const WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/placeholder-waitlist/';
+
+const SALON_COORDS = { lat: 25.4232, lng: -100.9925 };
+
+function getDistanceFromSalon(lat: number, lng: number): string {
+  const R = 6371;
+  const dLat = ((lat - SALON_COORDS.lat) * Math.PI) / 180;
+  const dLng = ((lng - SALON_COORDS.lng) * Math.PI) / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos((SALON_COORDS.lat * Math.PI) / 180) * Math.cos((lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const km = R * c;
+  if (km < 1) return `${Math.round(km * 1000)} m`;
+  if (km < 100) return `${Math.round(km)} km`;
+  return `${Math.round(km).toLocaleString()} km`;
+}
+
+export default function JoinUs() {
+  useLenis();
+  const { t } = useLanguage();
+  const heroRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const subRef = useRef<HTMLParagraphElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+
+  const [formData, setFormData] = useState({ nombre: '', email: '', telefono: '', descripcion: '', instagram: '', distancia: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState('');
+  const [detecting, setDetecting] = useState(false);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo(headingRef.current, { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out', delay: 0.3 });
+      gsap.fromTo(subRef.current, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 1, ease: 'power3.out', delay: 0.6 });
+      gsap.fromTo(formRef.current, { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 1, ease: 'power3.out', delay: 0.3, scrollTrigger: { trigger: formRef.current, start: 'top 80%' } });
+    }, heroRef);
+    return () => ctx.revert();
+  }, []);
+
+  const detectDistance = () => {
+    if (!navigator.geolocation) return;
+    setDetecting(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const dist = getDistanceFromSalon(pos.coords.latitude, pos.coords.longitude);
+        setFormData((prev) => ({ ...prev, distancia: dist }));
+        setDetecting(false);
+      },
+      () => setDetecting(false),
+      { timeout: 5000 }
+    );
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError('');
+    const payload = { form: 'waitlist', ...formData, device_type: window.innerWidth < 768 ? 'mobile' : 'desktop', timestamp_utc: new Date().toISOString(), source: 'join_us_page', page: '/join-us' };
+    try {
+      const response = await fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (response.ok) setIsSuccess(true); else setError(t('joinUs.error') as string);
+    } catch (err) { setError(t('joinUs.error') as string); } finally { setIsSubmitting(false); }
+  };
+
+  return (
+    <div className="relative">
+      <Navigation />
+      <main className="pt-[80px]">
+        <section ref={heroRef} className="relative w-full min-h-[60vh] flex items-center justify-center overflow-hidden bg-charcoal">
+          <div className="absolute inset-0">
+            <img src="/images/hero.jpg" alt="ANCHOR:23" className="w-full h-full object-cover opacity-40" />
+          </div>
+          <div className="relative z-10 text-center px-6 max-w-[900px]">
+            <h1 ref={headingRef} className="font-display text-cream text-[36px] md:text-[64px] uppercase tracking-[4px] md:tracking-[6px] leading-[1.1] opacity-0">{t('joinUs.title') as string}</h1>
+            <p ref={subRef} className="font-body text-cream/70 text-[18px] md:text-[22px] mt-6 leading-[1.6] opacity-0">{t('joinUs.subtitle') as string}</p>
+          </div>
+        </section>
+        <section className="bg-cream py-[80px] md:py-[120px]">
+          <div ref={formRef} className="max-w-[600px] mx-auto px-6 md:px-8 opacity-0">
+            {!isSuccess ? (
+              <>
+                <p className="font-body text-[18px] text-charcoal/60 leading-[1.6] mb-10 text-center">{t('joinUs.text') as string}</p>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div><label className="block font-display text-[12px] uppercase tracking-[2px] text-charcoal mb-2">{t('joinUs.name') as string} *</label><input type="text" required value={formData.nombre} onChange={(e) => setFormData({ ...formData, nombre: e.target.value })} className="w-full bg-transparent border border-charcoal/20 px-4 py-3 font-body text-[16px] text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-charcoal/50" placeholder="Tu nombre" /></div>
+                  <div><label className="block font-display text-[12px] uppercase tracking-[2px] text-charcoal mb-2">{t('joinUs.email') as string} *</label><input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full bg-transparent border border-charcoal/20 px-4 py-3 font-body text-[16px] text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-charcoal/50" placeholder="tu@email.com" /></div>
+                  <div><label className="block font-display text-[12px] uppercase tracking-[2px] text-charcoal mb-2">{t('joinUs.phone') as string} *</label><input type="tel" required value={formData.telefono} onChange={(e) => setFormData({ ...formData, telefono: e.target.value })} className="w-full bg-transparent border border-charcoal/20 px-4 py-3 font-body text-[16px] text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-charcoal/50" placeholder="+52 844 123 4567" /></div>
+
+                  {/* Distancia */}
+                  <div>
+                    <label className="block font-display text-[12px] uppercase tracking-[2px] text-charcoal mb-2">{t('joinUs.distance') as string}</label>
+                    <div className="flex gap-2">
+                      <input type="text" value={formData.distancia} onChange={(e) => setFormData({ ...formData, distancia: e.target.value })} className="flex-1 bg-transparent border border-charcoal/20 px-4 py-3 font-body text-[16px] text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-charcoal/50" placeholder={t('joinUs.distancePlaceholder') as string} />
+                      <button type="button" onClick={detectDistance} className="px-4 py-3 border border-charcoal/20 text-charcoal hover:bg-charcoal hover:text-cream transition-colors duration-300 cursor-pointer" title="Detectar ubicación">
+                        <MapPin size={18} />
+                      </button>
+                    </div>
+                    {detecting && <p className="font-body text-[12px] text-charcoal/40 mt-1">{t('joinUs.detecting') as string}</p>}
+                    <p className="font-body text-[12px] text-charcoal/40 mt-1">{t('joinUs.distanceNote') as string}</p>
+                  </div>
+
+                  <div><label className="block font-display text-[12px] uppercase tracking-[2px] text-charcoal mb-2">{t('joinUs.description') as string}</label><textarea rows={4} value={formData.descripcion} onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })} className="w-full bg-transparent border border-charcoal/20 px-4 py-3 font-body text-[16px] text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-charcoal/50" placeholder={t('joinUs.descriptionPlaceholder') as string} /></div>
+                  <div><label className="block font-display text-[12px] uppercase tracking-[2px] text-charcoal mb-2">{t('joinUs.instagram') as string}</label><input type="text" value={formData.instagram} onChange={(e) => setFormData({ ...formData, instagram: e.target.value })} className="w-full bg-transparent border border-charcoal/20 px-4 py-3 font-body text-[16px] text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-charcoal/50" placeholder={t('joinUs.instagramPlaceholder') as string} /></div>
+                  {error && <p className="font-body text-[14px] text-red-600">{error}</p>}
+                  <button type="submit" disabled={isSubmitting} className="w-full font-display text-[14px] tracking-[2px] uppercase text-cream bg-charcoal py-4 hover:bg-earth transition-colors duration-300 disabled:opacity-50 cursor-pointer">{isSubmitting ? t('joinUs.submitting') : t('joinUs.submit') as string}</button>
+                </form>
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <CheckCircle size={64} className="text-earth mx-auto mb-6" />
+                <h3 className="font-display text-[28px] uppercase tracking-[2px] text-charcoal mb-4">{t('joinUs.success') as string}</h3>
+                <p className="font-body text-[18px] text-charcoal/60 leading-[1.6]">{t('joinUs.successText') as string}</p>
+                <a href="/" className="inline-block mt-10 font-display text-[14px] tracking-[2px] uppercase text-charcoal border border-charcoal px-10 py-4 hover:bg-charcoal hover:text-cream transition-all duration-300">{t('joinUs.backHome') as string}</a>
+              </div>
+            )}
+          </div>
+        </section>
+      </main>
+      <Footer />
+    </div>
+  );
+}
