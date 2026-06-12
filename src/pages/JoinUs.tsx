@@ -9,20 +9,17 @@ import { useLanguage } from '../hooks/useLanguage';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/placeholder-waitlist/';
+const WEBHOOK_URL = 'https://flows.soul23.cloud/webhook/okouvwz8y68mnuju7bzp3dv8jq9v9lmlo7divex';
 
 const SALON_COORDS = { lat: 25.4232, lng: -100.9925 };
 
-function getDistanceFromSalon(lat: number, lng: number): string {
-  const R = 6371;
-  const dLat = ((lat - SALON_COORDS.lat) * Math.PI) / 180;
-  const dLng = ((lng - SALON_COORDS.lng) * Math.PI) / 180;
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos((SALON_COORDS.lat * Math.PI) / 180) * Math.cos((lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const km = R * c;
-  if (km < 1) return `${Math.round(km * 1000)} m`;
-  if (km < 100) return `${Math.round(km)} km`;
-  return `${Math.round(km).toLocaleString()} km`;
+function getDistanceIndex(km: number): number {
+  if (km < 15) return 0;
+  if (km < 30) return 1;
+  if (km < 60) return 2;
+  if (km < 120) return 3;
+  if (km < 180) return 4;
+  return 5;
 }
 
 export default function JoinUs() {
@@ -33,7 +30,9 @@ export default function JoinUs() {
   const subRef = useRef<HTMLParagraphElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
 
+  const distanceOptions = (t('joinUs.distanceOptions') as string[]) || [];
   const [formData, setFormData] = useState({ nombre: '', email: '', telefono: '', descripcion: '', instagram: '', distancia: '' });
+  const [distanceIdx, setDistanceIdx] = useState<number>(-1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
@@ -53,8 +52,15 @@ export default function JoinUs() {
     setDetecting(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const dist = getDistanceFromSalon(pos.coords.latitude, pos.coords.longitude);
-        setFormData((prev) => ({ ...prev, distancia: dist }));
+        const R = 6371;
+        const dLat = ((pos.coords.latitude - SALON_COORDS.lat) * Math.PI) / 180;
+        const dLng = ((pos.coords.longitude - SALON_COORDS.lng) * Math.PI) / 180;
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos((SALON_COORDS.lat * Math.PI) / 180) * Math.cos((pos.coords.latitude * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const km = R * c;
+        const idx = getDistanceIndex(km);
+        setDistanceIdx(idx);
+        setFormData((prev) => ({ ...prev, distancia: distanceOptions[idx] || '' }));
         setDetecting(false);
       },
       () => setDetecting(false),
@@ -62,16 +68,25 @@ export default function JoinUs() {
     );
   };
 
+  const handleDistanceChange = (idx: number) => {
+    setDistanceIdx(idx);
+    setFormData((prev) => ({ ...prev, distancia: distanceOptions[idx] || '' }));
+  };
+
+  const normalizeInstagram = (val: string) => val.replace(/^@+/, '');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError('');
-    const payload = { form: 'waitlist', ...formData, device_type: window.innerWidth < 768 ? 'mobile' : 'desktop', timestamp_utc: new Date().toISOString(), source: 'join_us_page', page: '/join-us' };
+    const payload = { form: 'waitlist', ...formData, instagram: normalizeInstagram(formData.instagram), device_type: window.innerWidth < 768 ? 'mobile' : 'desktop', timestamp_utc: new Date().toISOString(), source: 'join_us_page', page: '/join-us' };
     try {
       const response = await fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (response.ok) setIsSuccess(true); else setError(t('joinUs.error') as string);
     } catch (err) { setError(t('joinUs.error') as string); } finally { setIsSubmitting(false); }
   };
+
+  const igDisplay = normalizeInstagram(formData.instagram);
 
   return (
     <div className="relative">
@@ -96,21 +111,47 @@ export default function JoinUs() {
                   <div><label className="block font-display text-[12px] uppercase tracking-[2px] text-charcoal mb-2">{t('joinUs.email') as string} *</label><input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full bg-transparent border border-charcoal/20 px-4 py-3 font-body text-[16px] text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-charcoal/50" placeholder="tu@email.com" /></div>
                   <div><label className="block font-display text-[12px] uppercase tracking-[2px] text-charcoal mb-2">{t('joinUs.phone') as string} *</label><input type="tel" required value={formData.telefono} onChange={(e) => setFormData({ ...formData, telefono: e.target.value })} className="w-full bg-transparent border border-charcoal/20 px-4 py-3 font-body text-[16px] text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-charcoal/50" placeholder="+52 844 123 4567" /></div>
 
-                  {/* Distancia */}
+                  {/* Distancia - Slider */}
                   <div>
                     <label className="block font-display text-[12px] uppercase tracking-[2px] text-charcoal mb-2">{t('joinUs.distance') as string}</label>
-                    <div className="flex gap-2">
-                      <input type="text" value={formData.distancia} onChange={(e) => setFormData({ ...formData, distancia: e.target.value })} className="flex-1 bg-transparent border border-charcoal/20 px-4 py-3 font-body text-[16px] text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-charcoal/50" placeholder={t('joinUs.distancePlaceholder') as string} />
-                      <button type="button" onClick={detectDistance} className="px-4 py-3 border border-charcoal/20 text-charcoal hover:bg-charcoal hover:text-cream transition-colors duration-300 cursor-pointer" title="Detectar ubicación">
-                        <MapPin size={18} />
+                    <div className="mt-3">
+                      <input
+                        type="range"
+                        min={0}
+                        max={distanceOptions.length - 1}
+                        step={1}
+                        value={distanceIdx >= 0 ? distanceIdx : 3}
+                        onChange={(e) => handleDistanceChange(parseInt(e.target.value))}
+                        className="w-full h-[2px] bg-charcoal/20 rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-charcoal [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-charcoal [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:cursor-pointer"
+                      />
+                      <div className="flex justify-between mt-2">
+                        {distanceOptions.map((opt: string, i: number) => (
+                          <span key={i} className={`font-body text-[11px] md:text-[12px] transition-colors duration-200 cursor-pointer ${i === distanceIdx ? 'text-charcoal font-medium' : 'text-charcoal/40'}`} onClick={() => handleDistanceChange(i)}>{opt}</span>
+                        ))}
+                      </div>
+                    </div>
+                    {distanceIdx >= 0 && <p className="font-body text-[14px] text-charcoal mt-3 text-center font-medium">{distanceOptions[distanceIdx]}</p>}
+                    <div className="flex items-center gap-2 mt-3">
+                      <button type="button" onClick={detectDistance} className="flex items-center gap-2 px-3 py-1.5 border border-charcoal/20 text-charcoal/60 hover:bg-charcoal hover:text-cream transition-colors duration-300 cursor-pointer text-[12px] font-body uppercase tracking-[1px]">
+                        <MapPin size={14} /> {detecting ? (t('joinUs.detecting') as string) : 'Auto-detectar'}
                       </button>
                     </div>
-                    {detecting && <p className="font-body text-[12px] text-charcoal/40 mt-1">{t('joinUs.detecting') as string}</p>}
-                    <p className="font-body text-[12px] text-charcoal/40 mt-1">{t('joinUs.distanceNote') as string}</p>
+                    <p className="font-body text-[12px] text-charcoal/40 mt-2">{t('joinUs.distanceNote') as string}</p>
                   </div>
 
                   <div><label className="block font-display text-[12px] uppercase tracking-[2px] text-charcoal mb-2">{t('joinUs.description') as string}</label><textarea rows={4} value={formData.descripcion} onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })} className="w-full bg-transparent border border-charcoal/20 px-4 py-3 font-body text-[16px] text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-charcoal/50" placeholder={t('joinUs.descriptionPlaceholder') as string} /></div>
-                  <div><label className="block font-display text-[12px] uppercase tracking-[2px] text-charcoal mb-2">{t('joinUs.instagram') as string}</label><input type="text" value={formData.instagram} onChange={(e) => setFormData({ ...formData, instagram: e.target.value })} className="w-full bg-transparent border border-charcoal/20 px-4 py-3 font-body text-[16px] text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-charcoal/50" placeholder={t('joinUs.instagramPlaceholder') as string} /></div>
+
+                  {/* Instagram normalizado */}
+                  <div>
+                    <label className="block font-display text-[12px] uppercase tracking-[2px] text-charcoal mb-2">{t('joinUs.instagram') as string}</label>
+                    <input type="text" value={formData.instagram} onChange={(e) => setFormData({ ...formData, instagram: e.target.value })} className="w-full bg-transparent border border-charcoal/20 px-4 py-3 font-body text-[16px] text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-charcoal/50" placeholder={t('joinUs.instagramPlaceholder') as string} />
+                    {igDisplay && (
+                      <a href={`https://instagram.com/${igDisplay}`} target="_blank" rel="noopener noreferrer" className="font-body text-[13px] text-earth/70 hover:text-earth transition-colors mt-1 inline-block">
+                        instagram.com/{igDisplay}
+                      </a>
+                    )}
+                  </div>
+
                   {error && <p className="font-body text-[14px] text-red-600">{error}</p>}
                   <button type="submit" disabled={isSubmitting} className="w-full font-display text-[14px] tracking-[2px] uppercase text-cream bg-charcoal py-4 hover:bg-earth transition-colors duration-300 disabled:opacity-50 cursor-pointer">{isSubmitting ? t('joinUs.submitting') : t('joinUs.submit') as string}</button>
                 </form>
