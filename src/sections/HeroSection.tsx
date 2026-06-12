@@ -38,7 +38,7 @@ export default function HeroSection() {
           <Link ref={cta1Ref} to="/servicios" className="inline-block font-display text-[14px] tracking-[2px] uppercase text-charcoal bg-cream px-10 py-4 hover:bg-white transition-colors duration-300 opacity-0">
             {t('hero.ctaServices') as string}
           </Link>
-          <Link ref={cta2Ref} to="/join-us" className="inline-block font-display text-[14px] tracking-[2px] uppercase text-white border border-white px-10 py-4 hover:bg-white hover:text-charcoal transition-all duration-300 opacity-0">
+          <Link ref={cta2Ref} to="/invitar" className="inline-block font-display text-[14px] tracking-[2px] uppercase text-white border border-white px-10 py-4 hover:bg-white hover:text-charcoal transition-all duration-300 opacity-0">
             {t('hero.ctaJoin') as string}
           </Link>
         </div>

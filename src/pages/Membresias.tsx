@@ -6,7 +6,7 @@ import MembershipsSection from '../sections/MembershipsSection';
 import Footer from '../sections/Footer';
 import { useLanguage } from '../hooks/useLanguage';
 
-const WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/placeholder-memberships/';
+const WEBHOOK_URL = 'https://flows.soul23.cloud/webhook/27xv9ojycsfzp7tepia4ewavq2c0uep427bkecb';
 
 export default function Membresias() {
   useLenis();

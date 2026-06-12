@@ -22,7 +22,7 @@ export default function InvitationSection() {
   const items = [
     { title: t('invitation.gift') as string, desc: t('invitation.giftDesc') as string, cta: t('invitation.giftCta') as string, href: '#' },
     { title: t('invitation.events') as string, desc: t('invitation.eventsDesc') as string, cta: t('invitation.eventsCta') as string, href: '#' },
-    { title: t('invitation.waitlist') as string, desc: t('invitation.waitlistDesc') as string, cta: t('invitation.waitlistCta') as string, href: '/join-us' },
+    { title: t('invitation.waitlist') as string, desc: t('invitation.waitlistDesc') as string, cta: t('invitation.waitlistCta') as string, href: '/invitar' },
   ];
 
   useEffect(() => {

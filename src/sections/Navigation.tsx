@@ -51,8 +51,10 @@ export default function Navigation() {
     { to: '/', label: t('nav.home') as string },
     { to: '/historia', label: t('nav.about') as string },
     { to: '/servicios', label: t('nav.services') as string },
-    { to: '/contacto', label: t('nav.contact') as string },
     { to: '/membresias', label: t('nav.memberships') as string },
+    { to: '/trabajar', label: t('nav.work') as string },
+    { to: '/espacios', label: t('nav.spaces') as string },
+    { to: '/contacto', label: t('nav.contact') as string },
   ];
 
   const languages: Array<{ code: 'es' | 'en' | 'ko'; label: string }> = [
@@ -141,7 +143,7 @@ export default function Navigation() {
               {/* CTA */}
               <div className="mt-8 opacity-0 animate-fade-in" style={{ animationDelay: '0.5s', animationFillMode: 'forwards' }}>
                 <Link
-                  to="/join-us"
+                  to="/invitar"
                   onClick={handleClose}
                   className="inline-block font-display text-[14px] tracking-[2px] uppercase text-charcoal bg-cream px-10 py-4 hover:bg-earth hover:text-cream transition-colors duration-300"
                 >

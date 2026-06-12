@@ -23,7 +23,7 @@ export default function CTAJoinSection() {
       <div ref={contentRef} className="max-w-[800px] mx-auto px-6 md:px-8 text-center opacity-0">
         <h2 className="font-display text-[32px] md:text-[48px] uppercase tracking-[2px] text-cream leading-[1.2] mb-6">{t('ctaJoin.title') as string}</h2>
         <p className="font-body text-[18px] md:text-[22px] text-cream/60 leading-[1.8] mb-10">{t('ctaJoin.text') as string}</p>
-        <Link to="/join-us" className="inline-block font-display text-[14px] tracking-[2px] uppercase text-charcoal bg-cream px-12 py-5 hover:bg-earth hover:text-cream transition-colors duration-300">
+        <Link to="/invitar" className="inline-block font-display text-[14px] tracking-[2px] uppercase text-charcoal bg-cream px-12 py-5 hover:bg-earth hover:text-cream transition-colors duration-300">
           {t('ctaJoin.cta') as string}
         </Link>
       </div>

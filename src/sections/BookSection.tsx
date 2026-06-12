@@ -43,7 +43,7 @@ export default function BookSection() {
               <p className="font-body text-[14px] text-cream/50">{t('book.locationDesc') as string}</p>
             </div>
           </div>
-          <Link to="/join-us" className="inline-block mt-12 font-display text-[14px] tracking-[2px] uppercase text-charcoal bg-cream px-10 py-4 hover:bg-earth hover:text-cream transition-colors duration-300">
+          <Link to="/invitar" className="inline-block mt-12 font-display text-[14px] tracking-[2px] uppercase text-charcoal bg-cream px-10 py-4 hover:bg-earth hover:text-cream transition-colors duration-300">
             {t('book.cta') as string}
           </Link>
         </div>

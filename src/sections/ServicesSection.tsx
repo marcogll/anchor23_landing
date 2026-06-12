@@ -46,7 +46,7 @@ export default function ServicesSection() {
                 <div className="flex gap-6 md:hidden">
                   <span className="font-display text-[12px] uppercase tracking-[1.5px] text-charcoal/50">{service.duration}</span>
                 </div>
-                <a href="/join-us" className="inline-block mt-4 font-display text-[12px] uppercase tracking-[2px] text-earth border-b border-earth pb-0.5 hover:text-charcoal hover:border-charcoal transition-colors duration-300">
+                <a href="/invitar" className="inline-block mt-4 font-display text-[12px] uppercase tracking-[2px] text-earth border-b border-earth pb-0.5 hover:text-charcoal hover:border-charcoal transition-colors duration-300">
                   {t('catalog.book') as string}
                 </a>
               </div>

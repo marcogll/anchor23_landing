@@ -1,56 +1,39 @@
-import { useLenis } from '../hooks/useLenis';
+import { useEffect, useRef } from 'react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Navigation from '../sections/Navigation';
 import Footer from '../sections/Footer';
+import { useLenis } from '../hooks/useLenis';
 import { useLanguage } from '../hooks/useLanguage';
+
+gsap.registerPlugin(ScrollTrigger);
 
 export default function Franchises() {
   useLenis();
   const { t } = useLanguage();
-  const requirements = (t('franchises.requirements') as unknown) as string[];
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo(headingRef.current, { letterSpacing: '-5px', opacity: 0 }, { letterSpacing: '4px', opacity: 1, duration: 1.5, ease: 'power3.out', delay: 0.3 });
+      gsap.fromTo(contentRef.current, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 1, ease: 'power3.out', delay: 0.8 });
+    });
+    return () => ctx.revert();
+  }, []);
 
   return (
     <div className="relative">
       <Navigation />
       <main className="pt-[80px]">
-        <section className="bg-cream py-[80px] md:py-[120px] text-center">
-          <div className="max-w-[800px] mx-auto px-6 md:px-8">
-            <h1 className="font-display text-[36px] md:text-[56px] uppercase tracking-[4px] text-charcoal leading-[1.1]">{t('franchises.title') as string}</h1>
-            <h2 className="font-display text-[18px] md:text-[24px] uppercase tracking-[3px] text-charcoal/60 mt-4">Anchor:23</h2>
-          </div>
-        </section>
-        <section className="bg-bone py-[80px] md:py-[120px]">
-          <div className="max-w-[800px] mx-auto px-6 md:px-8 text-center">
-            <p className="font-body text-[18px] md:text-[20px] text-charcoal/60 leading-[1.6]">{t('franchises.intro') as string}</p>
-          </div>
-        </section>
-        <section className="bg-cream py-[80px] md:py-[120px]">
-          <div className="max-w-[1000px] mx-auto px-6 md:px-8">
-            <h3 className="font-display text-[24px] md:text-[32px] uppercase tracking-[2px] text-charcoal text-center mb-12">{t('franchises.whyTitle') as string}</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 mb-16">
-              <div className="bg-bone p-8 text-center">
-                <h4 className="font-display text-[18px] uppercase tracking-[1.5px] text-charcoal mb-4">{t('franchises.trademark') as string}</h4>
-                <p className="font-body text-[16px] text-charcoal/60 leading-[1.6]">{t('franchises.trademarkText') as string}</p>
-              </div>
-              <div className="bg-bone p-8 text-center">
-                <h4 className="font-display text-[18px] uppercase tracking-[1.5px] text-charcoal mb-4">{t('franchises.support') as string}</h4>
-                <p className="font-body text-[16px] text-charcoal/60 leading-[1.6]">{t('franchises.supportText') as string}</p>
-              </div>
-              <div className="bg-bone p-8 text-center">
-                <h4 className="font-display text-[18px] uppercase tracking-[1.5px] text-charcoal mb-4">{t('franchises.model') as string}</h4>
-                <p className="font-body text-[16px] text-charcoal/60 leading-[1.6]">{t('franchises.modelText') as string}</p>
-              </div>
-            </div>
-            <h3 className="font-display text-[24px] md:text-[32px] uppercase tracking-[2px] text-charcoal text-center mb-8">{t('franchises.requirementsTitle') as string}</h3>
-            <ul className="max-w-[600px] mx-auto space-y-4 mb-12">
-              {requirements.map((req, index) => (
-                <li key={index} className="font-body text-[16px] text-charcoal/80 flex items-start gap-3">
-                  <span className="text-earth mt-1">•</span>
-                  <span>{req}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="text-center">
-              <a href="mailto:franquicias@anchor23.mx" className="inline-block font-display text-[14px] tracking-[2px] uppercase text-cream bg-charcoal px-10 py-4 hover:bg-earth transition-colors duration-300">{t('franchises.cta') as string}</a>
+        <section className="bg-charcoal min-h-[80vh] flex items-center justify-center">
+          <div className="text-center px-6 max-w-[700px] mx-auto">
+            <h1 ref={headingRef} className="font-display text-cream text-[36px] md:text-[64px] uppercase tracking-[4px] md:tracking-[6px] leading-[1.1] opacity-0">{t('franchises.title') as string}</h1>
+            <div ref={contentRef} className="opacity-0">
+              <div className="w-12 h-[1px] bg-earth mx-auto my-8 md:my-12"></div>
+              <p className="font-body text-cream/50 text-[18px] md:text-[20px] leading-[1.8] mb-4">{t('franchises.construction') as string}</p>
+              <p className="font-body text-cream/30 text-[14px] md:text-[16px] leading-[1.6] mb-10">{t('franchises.constructionDetail') as string}</p>
+              <a href="mailto:franquicias@anchor23.mx" className="inline-block font-display text-[12px] tracking-[2px] uppercase text-cream border border-cream/30 px-10 py-4 hover:bg-cream hover:text-charcoal transition-all duration-300">{t('franchises.contactCta') as string}</a>
             </div>
           </div>
         </section>
