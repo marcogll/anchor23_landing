@@ -1,4 +1,37 @@
-# React + TypeScript + Vite
+<p align="center">
+  <a href="https://soul23.mx">
+    <picture>
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcset="https://raw.githubusercontent.com/marcogll/mg_data_storage/refs/heads/main/soul23/logo/soul23_logo_wh.png">
+      <source
+        media="(prefers-color-scheme: light)"
+        srcset="https://raw.githubusercontent.com/marcogll/mg_data_storage/refs/heads/main/soul23/logo/soul23_logo_blk.png">
+      <img
+        src="https://raw.githubusercontent.com/marcogll/mg_data_storage/refs/heads/main/soul23/logo/soul23_logo_blk.png"
+        width="110"
+        alt="Soul:23">
+    </picture>
+  </a>
+</p>
+
+<h1 align="center">Anchor23 Landing</h1>
+
+<p align="center">
+  Landing page de Anchor23 construida con React, TypeScript y Vite.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/React-3a3a3a?style=flat-square&logo=react&logoColor=white">
+  <img src="https://img.shields.io/badge/TypeScript-3a3a3a?style=flat-square&logo=typescript&logoColor=white">
+  <img src="https://img.shields.io/badge/Vite-3a3a3a?style=flat-square&logo=vite&logoColor=white">
+</p>
+
+---
+
+## Description
+
+Landing page para Anchor23 construida con React, TypeScript y Vite con HMR y reglas de ESLint. Sobre el template oficial Vite React.
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
