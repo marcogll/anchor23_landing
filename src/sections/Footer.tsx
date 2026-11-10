@@ -15,7 +15,7 @@ export default function Footer() {
           <div>
             <h4 className="font-display text-[12px] uppercase tracking-[2px] text-charcoal mb-4">{t('footer.links') as string}</h4>
             <ul className="space-y-2">
-              {[{ label: t('nav.home') as string, to: '/' }, { label: t('nav.about') as string, to: '/historia' }, { label: t('nav.services') as string, to: '/servicios' }, { label: t('nav.memberships') as string, to: '/membresias' }, { label: t('nav.work') as string, to: '/trabajar' }, { label: t('nav.spaces') as string, to: '/espacios' }, { label: t('nav.contact') as string, to: '/contacto' }].map((link) => (
+              {[{ label: t('nav.home') as string, to: '/' }, { label: t('nav.about') as string, to: '/historia' }, { label: t('nav.services') as string, to: '/servicios' }, { label: t('nav.memberships') as string, to: '/membresias' }, { label: t('nav.work') as string, to: '/join' }, { label: t('nav.spaces') as string, to: '/espacios' }, { label: t('nav.contact') as string, to: '/contacto' }].map((link) => (
                 <li key={link.to}>
                   <Link to={link.to} className="font-body text-[14px] text-charcoal/60 hover:text-charcoal transition-colors duration-300">{link.label}</Link>
                 </li>

@@ -6,10 +6,11 @@ import Navigation from '../sections/Navigation';
 import Footer from '../sections/Footer';
 import { useLenis } from '../hooks/useLenis';
 import { useLanguage } from '../hooks/useLanguage';
+import { SITE } from '../lib/site';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/placeholder/';
+const WEBHOOK_URL = SITE.webhooks.collabs;
 
 export default function Collabs() {
   useLenis();

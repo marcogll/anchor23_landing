@@ -3,6 +3,7 @@ import Navigation from '../sections/Navigation';
 import ServicesSection from '../sections/ServicesSection';
 import Footer from '../sections/Footer';
 import { useLanguage } from '../hooks/useLanguage';
+import { SITE } from '../lib/site';
 
 export default function Servicios() {
   useLenis();
@@ -35,7 +36,7 @@ export default function Servicios() {
           <div className="max-w-[700px] mx-auto px-6 md:px-8">
             <h3 className="font-display text-[24px] md:text-[32px] uppercase tracking-[2px] text-charcoal mb-6">{t('servicesPage.ctaTitle') as string}</h3>
             <p className="font-body text-[18px] text-charcoal/60 leading-[1.6] mb-8">{t('servicesPage.ctaText') as string}</p>
-            <a href="https://booking.anchor23.mx" className="inline-block font-display text-[14px] tracking-[2px] uppercase text-cream bg-charcoal px-10 py-4 hover:bg-earth transition-colors duration-300">{t('servicesPage.ctaButton') as string}</a>
+            <a href={SITE.bookingUrl} className="inline-block font-display text-[14px] tracking-[2px] uppercase text-cream bg-charcoal px-10 py-4 hover:bg-earth transition-colors duration-300">{t('servicesPage.ctaButton') as string}</a>
           </div>
         </section>
       </main>

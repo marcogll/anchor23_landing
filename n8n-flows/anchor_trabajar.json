@@ -1,0 +1,189 @@
+{
+  "name": "anchor_trabajar",
+  "nodes": [
+    {
+      "parameters": { "httpMethod": "POST", "path": "vbc3xs2jtqu7miz5klsgpvxho54p685huxrvyjtb", "options": {} },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [-9000, 2000],
+      "id": "wh-trabajar",
+      "name": "trabajar"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json || {};\nconst body = raw.body ?? raw;\nconst a = body.survey_answers ?? body;\nconst m = body.metadata ?? {};\nconst submitted = m.submittedAt\n  ? new Date(m.submittedAt).toLocaleString('es-MX', { timeZone: 'America/Monterrey' })\n  : '—';\nconst pc = (s) => String(s||'').trim().toLowerCase().replace(/(?:^|\\s)\\S/g, c => c.toUpperCase());\nconst esc = (s) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');\n\nreturn [{ json: {\n  type: body.type || 'job_application',\n  tracking_id: a.tracking_id || m.tracking_id || '—',\n  nombre: esc(a.nombre || a.name || a.app_name || '—'),\n  email: esc(a.email || a.correo || a.app_email || '—'),\n  telefono: esc(a.telefono || a.phone || a.celular || m.phoneNumber || '—'),\n  puesto: esc(a.puesto || a.role || a.app_role || '—'),\n  experiencia: esc(a.experiencia || a.app_experience || '—'),\n  instagram: esc(a.instagram || a.app_portfolio || '—'),\n  mensaje: esc(a.mensaje || a.why || a.app_why || '—'),\n  source: m.source || 'trabajar_page',\n  submitted_at_local: submitted,\n  submitted_at_utc: m.submittedAt || '—',\n  raw: body\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-8768, 2000],
+      "id": "trabajar-parse",
+      "name": "trabajar_parse"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst esc = (s) => String(s ?? '—').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');\nconst pc = (s) => String(s||'').trim().toLowerCase().replace(/(?:^|\\s)\\S/g, c => c.toUpperCase());\nconst LOGO_DARK = 'https://raw.githubusercontent.com/marcogll/anchor23_landing/main/public/logo_anchor23_white.svg';\nconst PUESTOS = { manicurista:'Manicurista', pedicurista:'Pedicurista', gel:'Especialista en Gel / Acrílico', lash:'Lash Designer', estilista:'Estilista / Colorista', recepcion:'Recepción / Atención al Cliente', concierge:'Beauty Concierge', otro:'Otro' };\nconst puestoTxt = PUESTOS[d.puesto] || d.puesto || '—';\n\nconst slug = (s) => String(s||'aplicacion').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'').toLowerCase();\nconst bw = (html) => html.replace('</head>','<style>body{background:#fff!important}*{color:#000!important;border-color:#999!important;box-shadow:none!important}table,td,div,span{background:#fff!important}img{filter:grayscale(100%) contrast(1.1)!important}@page{size:A4;margin:0}</style></head>');\n\nconst html_email = `<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<style>\nbody,table,td{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline}\nbody{background:#F6F1EC;font-family:Inter,Arial,sans-serif;-webkit-text-size-adjust:100%}\nimg{border:0;outline:none;text-decoration:none;display:block}\n@media only screen and (max-width:600px){\n  .wrapper{width:100%!important;min-width:100%!important}\n  .content-pad{padding:20px 16px!important}\n}\n</style>\n</head>\n<body>\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#F6F1EC;padding:24px 12px\">\n<tr><td align=\"center\">\n<table class=\"wrapper\" width=\"560\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#FFFFFF;border-radius:0;overflow:hidden;max-width:560px;box-shadow:0 2px 20px rgba(63,54,46,.08)\">\n\n<tr><td style=\"background:#3F362E;padding:32px 32px 24px\">\n<img src=\"${LOGO_DARK}\" width=\"60\" alt=\"ANCHOR:23\" style=\"display:block;margin-bottom:16px\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#B8A89A;margin-bottom:6px\">Talento · Recruitment</div>\n<div style=\"font-family:Cinzel,Georgia,serif;font-size:26px;font-weight:400;color:#F6F1EC;line-height:1.15;letter-spacing:.04em\">¡Recibimos tu solicitud!</div>\n</td></tr>\n\n<tr><td class=\"content-pad\" style=\"padding:28px 32px\">\n<p style=\"font-family:Inter,Arial,sans-serif;font-size:15px;line-height:1.85;color:#3F362E;margin:0 0 20px\">Hola <strong>${esc(d.nombre)}</strong>,</p>\n<p style=\"font-family:Inter,Arial,sans-serif;font-size:15px;line-height:1.85;color:#3F362E;margin:0 0 20px\">Recibimos tu solicitud para el área de <strong>${esc(puestoTxt)}</strong>. Nuestro equipo de talento revisará tu perfil y te contactaremos si tu experiencia se alinea con nuestras necesidades.</p>\n\n<div style=\"background:#F6F1EC;border-left:3px solid #6F5E4F;padding:14px 18px;margin-bottom:22px\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#B8A89A;margin-bottom:8px\">Tu aplicación</div>\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>\n<td style=\"font-family:Cinzel,Georgia,serif;font-size:14px;color:#3F362E;padding-bottom:4px\"><strong>${esc(puestoTxt)}</strong></td>\n<td style=\"font-family:Inter,Arial,sans-serif;font-size:12px;color:#6F5E4F;padding-bottom:4px\">${d.experiencia&&d.experiencia!=='—'?esc(d.experiencia):''}</td>\n</tr>\n${d.instagram&&d.instagram!=='—'?`<tr><td colspan=\"2\" style=\"font-family:Inter,Arial,sans-serif;font-size:12px;color:#6F5E4F\">📸 ${esc(d.instagram)}</td></tr>`:''}\n</table>\n</div>\n\n<div style=\"border-top:1px solid #EFE7DE;margin:24px 0 16px\"></div>\n<p style=\"font-family:Inter,Arial,sans-serif;font-size:13px;line-height:1.7;color:#B8A89A\">\nDudas: <a href=\"mailto:talento@anchor23.mx\" style=\"color:#6F5E4F;text-decoration:none;font-weight:500\">talento@anchor23.mx</a>\n</p>\n</td></tr>\n\n<tr><td style=\"background:#F6F1EC;padding:20px 32px;text-align:center\">\n<p style=\"font-family:Cinzel,Georgia,serif;font-size:12px;letter-spacing:3px;color:#B8A89A;text-transform:uppercase;margin:0 0 4px\">ANCHOR:23</p>\n<p style=\"font-family:Inter,Arial,sans-serif;font-size:11px;color:#B8A89A;margin:0;font-style:italic\">Belleza anclada en exclusividad</p>\n</td></tr>\n\n</table>\n</td></tr>\n</table>\n</body></html>`;\n\nconst html_admin = `<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<style>\nbody,table,td{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline}\nbody{background:#F6F1EC;font-family:Inter,Arial,sans-serif;-webkit-text-size-adjust:100%}\nimg{border:0;outline:none;text-decoration:none;display:block}\n@media only screen and (max-width:600px){\n  .wrapper{width:100%!important;min-width:100%!important}\n  .content-pad{padding:14px 16px!important}\n}\n</style>\n</head>\n<body>\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#F6F1EC;padding:24px 12px\">\n<tr><td align=\"center\">\n<table class=\"wrapper\" width=\"580\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#FFFFFF;border-radius:0;overflow:hidden;max-width:580px;box-shadow:0 2px 20px rgba(63,54,46,.10)\">\n\n<tr><td style=\"background:#3F362E;padding:20px 24px\">\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>\n<td><img src=\"${LOGO_DARK}\" width=\"48\" alt=\"ANCHOR:23\" style=\"display:block;margin-bottom:6px\"><div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#B8A89A\">Talento · Recruitment</div></td>\n<td align=\"right\"><div style=\"background:#6F5E4F;padding:5px 13px;display:inline-block\"><span style=\"font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:600;color:#F6F1EC\">📋 Nueva aplicación</span></div></td>\n</tr></table>\n</td></tr>\n\n<tr><td style=\"background:#F6F1EC;padding:18px 24px;border-bottom:1px solid #EFE7DE\">\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>\n<td style=\"vertical-align:middle\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#B8A89A;margin-bottom:3px\">Aplicante</div>\n<div style=\"font-family:Cinzel,Georgia,serif;font-size:22px;color:#3F362E;line-height:1.2;margin-bottom:4px;letter-spacing:.03em\">${esc(d.nombre)}</div>\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:12px;color:#6F5E4F\">📞 ${esc(d.telefono)}  ·  📧 ${esc(d.email)}</div>\n</td>\n<td align=\"right\" style=\"vertical-align:top;padding-left:12px\">\n<div style=\"background:#6F5E4F;padding:6px 12px;text-align:center;margin-bottom:6px\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#B8A89A;margin-bottom:2px\">Puesto</div>\n<div style=\"font-family:Cinzel,Georgia,serif;font-size:13px;color:#F6F1EC;font-weight:700\">${esc(puestoTxt)}</div></div>\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;color:#B8A89A;text-align:right\">${esc(d.submitted_at_local)}</div>\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:8px;color:#B8A89A;text-align:right;margin-top:2px\">${esc(d.tracking_id)}</div>\n</td>\n</tr></table>\n</td></tr>\n\n<tr><td class=\"content-pad\" style=\"padding:18px 24px;border-bottom:1px solid #EFE7DE\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#B8A89A;margin-bottom:12px\">Perfil profesional</div>\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>\n<td style=\"vertical-align:top;padding-right:16px;width:50%;padding-bottom:10px\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#B8A89A;margin-bottom:3px\">Experiencia</div>\n<div style=\"font-family:Georgia,serif;font-size:14px;color:#3F362E\">${esc(d.experiencia||'—')}</div></td>\n<td style=\"vertical-align:top;padding-bottom:10px\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#B8A89A;margin-bottom:3px\">Instagram / Portfolio</div>\n<div style=\"font-family:Georgia,serif;font-size:14px;color:#3F362E\">${d.instagram&&d.instagram!=='—'?esc(d.instagram):'—'}</div></td>\n</tr></table>\n</td></tr>\n\n<tr><td class=\"content-pad\" style=\"padding:18px 24px\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#B8A89A;margin-bottom:10px\">¿Por qué quiere unirse a ANCHOR:23?</div>\n<div style=\"background:#F6F1EC;padding:14px 16px;font-family:Georgia,serif;font-size:13px;color:#3F362E;line-height:1.75;font-style:italic;border-left:3px solid #6F5E4F\">\"${esc(d.mensaje||'—')}\"</div>\n</td></tr>\n\n<tr><td style=\"background:#3F362E;padding:14px 24px\">\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>\n<td style=\"font-family:Inter,Arial,sans-serif;font-style:italic;font-size:11px;color:#B8A89A\">ANCHOR:23 · Talento</td>\n<td align=\"right\" style=\"font-family:Inter,Arial,sans-serif;font-size:8px;color:#6F5E4F;letter-spacing:.06em\">${esc(d.tracking_id)}</td>\n</tr></table>\n</td></tr>\n\n</table>\n</td></tr>\n</table>\n</body></html>`;\n\nconst html_internal = `<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset=\"UTF-8\">\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link href=\"https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;600&display=swap\" rel=\"stylesheet\">\n<style>\n*{box-sizing:border-box;margin:0;padding:0}\nbody{font-family:Inter,Arial,sans-serif;background:#ece8e6;-webkit-print-color-adjust:exact;print-color-adjust:exact}\n.page{width:210mm;height:297mm;margin:0 auto;padding:9mm 11mm;background:#fff;overflow:hidden}\n@media screen{body{padding:16px 0}.page{box-shadow:0 4px 28px rgba(0,0,0,.10);border-radius:4px}}\n@media print{body{background:#fff;padding:0}.page{margin:0;padding:9mm 11mm}@page{size:A4 portrait;margin:0}}\n</style>\n</head>\n<body><div class=\"page\">\n\n<div style=\"border-bottom:.5px solid #6F5E4F;padding-bottom:6px;margin-bottom:6px\">\n<div style=\"font-family:Cinzel,Georgia,serif;font-weight:700;font-size:5.8pt;letter-spacing:.13em;text-transform:uppercase;color:#B8A89A;margin-bottom:1px\">ANCHOR:23 · Solicitud de Empleo</div>\n<div style=\"font-family:Cinzel,Georgia,serif;font-style:italic;font-weight:300;font-size:17pt;color:#3F362E;line-height:1.1\">${esc(d.nombre)}</div>\n</div>\n\n<div style=\"margin-bottom:7px\">\n<span style=\"display:inline-block;background:#3F362E;border-radius:2px;padding:2px 7px;margin-right:4px;font-family:Inter,Arial,sans-serif;font-weight:600;font-size:6.5pt;color:#F6F1EC\">📋 Job Application</span>\n<span style=\"display:inline-block;background:#6F5E4F;border-radius:2px;padding:2px 7px;margin-right:4px;font-family:Inter,Arial,sans-serif;font-size:6.5pt;color:#F6F1EC\">${esc(puestoTxt)}</span>\n</div>\n\n<div style=\"font-family:Inter,Arial,sans-serif;font-weight:700;font-size:5.8pt;letter-spacing:.13em;text-transform:uppercase;color:#B8A89A;border-bottom:.5px solid #D9BEB3;padding-bottom:2px;margin:9px 0 5px\">1 · Información</div>\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>\n<td style=\"vertical-align:top;padding:0 7px 5px 0;width:40%\"><div style=\"font-family:Inter,Arial,sans-serif;font-weight:700;font-size:5.8pt;letter-spacing:.13em;text-transform:uppercase;color:#B8A89A;margin-bottom:1px\">Nombre</div><div style=\"font-family:Inter,Arial,sans-serif;font-weight:400;font-size:7.8pt;color:#3F362E;border-bottom:.5px solid #EFE7DE;padding-bottom:2px;min-height:13px\">${esc(d.nombre)}</div></td>\n<td style=\"vertical-align:top;padding:0 7px 5px 0;width:35%\"><div style=\"font-family:Inter,Arial,sans-serif;font-weight:700;font-size:5.8pt;letter-spacing:.13em;text-transform:uppercase;color:#B8A89A;margin-bottom:1px\">Puesto</div><div style=\"font-family:Inter,Arial,sans-serif;font-weight:400;font-size:7.8pt;color:#3F362E;border-bottom:.5px solid #EFE7DE;padding-bottom:2px;min-height:13px\">${esc(puestoTxt)}</div></td>\n<td style=\"vertical-align:top;padding:0 7px 5px 0;width:25%\"><div style=\"font-family:Inter,Arial,sans-serif;font-weight:700;font-size:5.8pt;letter-spacing:.13em;text-transform:uppercase;color:#B8A89A;margin-bottom:1px\">Experiencia</div><div style=\"font-family:Inter,Arial,sans-serif;font-weight:400;font-size:7.8pt;color:#3F362E;border-bottom:.5px solid #EFE7DE;padding-bottom:2px;min-height:13px\">${esc(d.experiencia||'—')}</div></td>\n</tr><tr>\n<td><div style=\"font-family:Inter,Arial,sans-serif;font-weight:700;font-size:5.8pt;letter-spacing:.13em;text-transform:uppercase;color:#B8A89A;margin-bottom:1px\">Email</div><div style=\"font-family:Inter,Arial,sans-serif;font-weight:400;font-size:7.8pt;color:#3F362E;border-bottom:.5px solid #EFE7DE;padding-bottom:2px;min-height:13px\">${esc(d.email)}</div></td>\n<td><div style=\"font-family:Inter,Arial,sans-serif;font-weight:700;font-size:5.8pt;letter-spacing:.13em;text-transform:uppercase;color:#B8A89A;margin-bottom:1px\">Teléfono</div><div style=\"font-family:Inter,Arial,sans-serif;font-weight:400;font-size:7.8pt;color:#3F362E;border-bottom:.5px solid #EFE7DE;padding-bottom:2px;min-height:13px\">${esc(d.telefono)}</div></td>\n<td><div style=\"font-family:Inter,Arial,sans-serif;font-weight:700;font-size:5.8pt;letter-spacing:.13em;text-transform:uppercase;color:#B8A89A;margin-bottom:1px\">Instagram</div><div style=\"font-family:Inter,Arial,sans-serif;font-weight:400;font-size:7.8pt;color:#3F362E;border-bottom:.5px solid #EFE7DE;padding-bottom:2px;min-height:13px\">${esc(d.instagram||'—')}</div></td>\n</tr></table>\n\n<div style=\"font-family:Inter,Arial,sans-serif;font-weight:700;font-size:5.8pt;letter-spacing:.13em;text-transform:uppercase;color:#B8A89A;border-bottom:.5px solid #D9BEB3;padding-bottom:2px;margin:9px 0 5px\">2 · Mensaje del aplicante</div>\n<div style=\"background:#FAFAFA;border:.5px solid #EFE7DE;padding:5px 8px;font-family:Inter,Arial,sans-serif;font-size:7.8pt;color:#3F362E;font-style:italic;min-height:24px\">${esc(d.mensaje||'—')}</div>\n\n<div style=\"border-top:.5px solid #D9BEB3;margin-top:12px;padding-top:6px\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-weight:700;font-size:5.8pt;letter-spacing:.13em;text-transform:uppercase;color:#B8A89A;margin-bottom:6px\">Firmas</div>\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>\n<td style=\"width:45%;vertical-align:bottom;padding-right:20px\">\n<div style=\"height:40px;border-bottom:.5px solid #3F362E;margin-bottom:4px\"></div>\n<div style=\"font-family:Inter,Arial,sans-serif;font-weight:700;font-size:5.5pt;letter-spacing:.1em;text-transform:uppercase;color:#B8A89A;margin-bottom:1px\">Responsable de talento</div>\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:7.5pt;color:#6F5E4F\">ANCHOR:23 · Beauty Club</div>\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:5.5pt;color:#B8A89A;margin-top:1px\">${esc(d.submitted_at_local)}</div>\n</td>\n<td style=\"width:10%\"></td>\n<td style=\"width:45%;vertical-align:bottom\">\n<div style=\"height:40px;border-bottom:.5px solid #3F362E;margin-bottom:4px\"></div>\n<div style=\"font-family:Inter,Arial,sans-serif;font-weight:700;font-size:5.5pt;letter-spacing:.1em;text-transform:uppercase;color:#B8A89A;margin-bottom:6px\">Reclutador</div>\n<div style=\"border-bottom:.5px solid #3F362E;min-height:14px\"></div>\n</td>\n</tr></table>\n</div>\n\n<div style=\"border-top:.5px solid #D9BEB3;margin-top:8px;padding-top:4px\">\n<div style=\"font-family:Cinzel,Georgia,serif;font-style:italic;font-weight:300;font-size:9pt;color:#B8A89A\">ANCHOR:23 · Talento</div>\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:5.5pt;color:#B8A89A;letter-spacing:.06em;text-align:right\">${esc(d.submitted_at_utc)}</div>\n</div>\n\n</div></body></html>`;\n\nconst html_internal_bw = bw(html_internal);\n\nreturn [{ json: {\n  _from_email: 'ANCHOR:23 | Talento <talento@anchor23.mx>',\n  ...d,\n  email_to: d.email,\n  admin_to: 'talento@anchor23.mx',\n  email_subject: `Solicitud recibida · ANCHOR:23 · ${d.nombre}`,\n  admin_subject: `Nueva aplicación · ${d.nombre} · ${puestoTxt}`,\n  html_email,\n  html_admin,\n  html_internal,\n  html_external: html_email,\n  html_internal,\n  html_external_bw: bw(html_email),\n  html_internal_bw,\n  filename_external: `aplicacion_${slug(d.nombre)}_ext.html`,\n  filename_internal: `aplicacion_${slug(d.nombre)}_int.html`,\n  filename_external_bw: `aplicacion_${slug(d.nombre)}_ext_bw.html`,\n  filename_internal_bw: `aplicacion_${slug(d.nombre)}_int_bw.html`,\n}}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-8512, 2000],
+      "id": "html-trabajar",
+      "name": "html_trabajar"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nfunction sanitize(html) {\n  if (!html) return null;\n  return html.replace(/<link[^>]*>/gi, '').replace(/<script[^>]*>[\\s\\S]*?<\\/script>/gi, '').replace(/<img[^>]*>/gi, '').replace(/@import[^;]+;/gi, '').replace(/url\\(['\"]?https?:\\/\\/[^)'\"\\s]+['\"]?\\)/gi, 'none');\n}\nconst slug = (s) => String(s || 'doc').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/,'').toLowerCase();\nconst cleanColor = sanitize(d.html_internal);\nconst cleanBW    = sanitize(d.html_internal_bw);\nif (!cleanColor) throw new Error('html_internal vacío');\nconst base = `${slug(d.tracking_id)}_${slug(d.nombre)}`;\nconst binary = {\n  html_color: await this.helpers.prepareBinaryData(Buffer.from(cleanColor,'utf-8'),'index.html','text/html'),\n  html_bw:    await this.helpers.prepareBinaryData(Buffer.from(cleanBW||cleanColor,'utf-8'),'index.html','text/html'),\n};\nreturn [{ json: { ...d, _base: base }, binary }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-8240, 2000],
+      "id": "html-to-binary-trabajar",
+      "name": "html → binary"
+    },
+    {
+      "parameters": {
+        "method": "POST", "url": "http://100.98.169.44:3001/forms/chromium/convert/html",
+        "sendBody": true, "contentType": "multipart-form-data",
+        "bodyParameters": { "parameters": [
+          { "parameterType": "formBinaryData", "name": "files", "inputDataFieldName": "html_color" },
+          { "name": "paperWidth", "value": "8.27" }, { "name": "paperHeight", "value": "11.69" },
+          { "name": "marginTop", "value": "0.4" }, { "name": "marginBottom", "value": "0.4" },
+          { "name": "marginLeft", "value": "0.4" }, { "name": "marginRight", "value": "0.4" },
+          { "name": "printBackground", "value": "true" }
+        ]},
+        "options": { "response": { "response": { "responseFormat": "file", "outputPropertyName": "pdf_color" } } }
+      },
+      "name": "gotenberg · color",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-8000, 1920],
+      "id": "gotenberg-color-trabajar"
+    },
+    {
+      "parameters": {
+        "method": "POST", "url": "http://100.98.169.44:3001/forms/chromium/convert/html",
+        "sendBody": true, "contentType": "multipart-form-data",
+        "bodyParameters": { "parameters": [
+          { "parameterType": "formBinaryData", "name": "files", "inputDataFieldName": "html_bw" },
+          { "name": "paperWidth", "value": "8.27" }, { "name": "paperHeight", "value": "11.69" },
+          { "name": "marginTop", "value": "0.4" }, { "name": "marginBottom", "value": "0.4" },
+          { "name": "marginLeft", "value": "0.4" }, { "name": "marginRight", "value": "0.4" },
+          { "name": "printBackground", "value": "true" }
+        ]},
+        "options": { "response": { "response": { "responseFormat": "file", "outputPropertyName": "pdf_bw" } } }
+      },
+      "name": "gotenberg · bw",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-8000, 2080],
+      "id": "gotenberg-bw-trabajar"
+    },
+    {
+      "parameters": {
+        "jsCode": "const all = $input.all();\nconst colorItem = all.find(i => i.binary?.pdf_color) || all[0];\nconst bwItem    = all.find(i => i.binary?.pdf_bw)    || all[1];\nconst bin = {};\nif (colorItem?.binary?.pdf_color) bin.pdf_color = colorItem.binary.pdf_color;\nif (bwItem?.binary?.pdf_bw)       bin.pdf_bw    = bwItem.binary.pdf_bw;\nif (!bin.pdf_color) throw new Error('pdf_color no llegó de Gotenberg');\nreturn [{ json: { ...(colorItem?.json || {}) }, binary: bin }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-7728, 1920],
+      "id": "merge-pdfs-trabajar",
+      "name": "merge · pdfs"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item  = $input.first();\nconst base  = item.json._base || 'anchor_doc';\nconst bin   = item.binary || {};\nif (bin.pdf_color) bin.pdf_color = { ...bin.pdf_color, fileName: `${base}_color.pdf`, mimeType: 'application/pdf' };\nif (bin.pdf_bw)    bin.pdf_bw    = { ...bin.pdf_bw,    fileName: `${base}_bw.pdf`,    mimeType: 'application/pdf' };\nreturn [{ json: { ...item.json }, binary: bin }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-7488, 1920],
+      "id": "rename-pdfs-trabajar",
+      "name": "rename · pdfs"
+    },
+    {
+      "parameters": {
+        "fromEmail": "ANCHOR:23 | Talento <talento@anchor23.mx>",
+        "toEmail": "={{ $json.email }}",
+        "subject": "={{ `✨ Solicitud recibida · ANCHOR:23 · ${$json.nombre}` }}",
+        "html": "={{ $('html_trabajar').item.json.html_email }}",
+        "options": { "appendAttribution": false, "ccEmail": "", "bccEmail": "" }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [-7424, 2144],
+      "id": "email-ext-trabajar",
+      "name": "trabajar · ext → aplicante",
+      "credentials": { "smtp": { "id": "WAIT_FOR_USER", "name": "anchor_smtp" } }
+    },
+    {
+      "parameters": {
+        "fromEmail": "ANCHOR:23 | Talento <talento@anchor23.mx>",
+        "toEmail": "talento@anchor23.mx",
+        "subject": "={{ `📋 Nueva aplicación · ${$('html_trabajar').item.json.nombre}` }}",
+        "html": "={{ $('html_trabajar').item.json.html_admin }}",
+        "options": { "appendAttribution": false, "attachments": "pdf_color", "ccEmail": "", "bccEmail": "" }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [-7248, 1920],
+      "id": "email-int-trabajar",
+      "name": "trabajar · int → talento@",
+      "credentials": { "smtp": { "id": "WAIT_FOR_USER", "name": "anchor_smtp" } }
+    },
+    {
+      "parameters": {
+        "fromEmail": "ANCHOR:23 | Talento <talento@anchor23.mx>",
+        "toEmail": "talento@anchor23.mx",
+        "subject": "={{ `🖨️ Aplicación · ${$('html_trabajar').item.json.nombre}` }}",
+        "options": { "appendAttribution": false, "attachments": "pdf_bw", "ccEmail": "" }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [-7488, 2000],
+      "id": "email-print-trabajar",
+      "name": "trabajar · print → impresora",
+      "credentials": { "smtp": { "id": "WAIT_FOR_USER", "name": "anchor_smtp" } }
+    },
+    {
+      "parameters": {
+        "chatId": "-1000000000000",
+        "text": "={{ (() => {\nconst d = $('html_trabajar').item.json;\nconst div = '─────────────────────';\nconst PUESTOS = { manicurista:'Manicurista', pedicurista:'Pedicurista', gel:'💅 Especialista en Gel', lash:'👁️ Lash Designer', estilista:'💇 Estilista / Colorista', recepcion:'🗂️ Recepción', concierge:'👑 Beauty Concierge', otro:'Otra' };\nconst puesto = PUESTOS[d.puesto] || d.puesto || '—';\nreturn [\n  `📋 *Nueva Aplicación · ANCHOR:23*`,\n  div,\n  `👤 *Aplicante:* ${d.nombre}`,\n  `💼 *Puesto:* ${puesto}`,\n  `📧 ${d.email || '—'}`,\n  `📞 ${d.telefono || '—'}`,\n  div,\n  d.experiencia ? `*Experiencia:* ${d.experiencia}` : '',\n  d.instagram ? `📸 ${d.instagram}` : '',\n  d.mensaje && d.mensaje !== '—' ? `\\n💬 _${d.mensaje}_` : '',\n  div,\n  `🔖 \\`${d.tracking_id || '—'}\\``\n].filter(x => x !== '').join('\\n');\n})() }}",
+        "additionalFields": { "appendAttribution": false, "disable_web_page_preview": true, "parse_mode": "Markdown", "message_thread_id": 0 }
+      },
+      "name": "tg · trabajar → grupo",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [-7248, 2064],
+      "id": "tg-trabajar",
+      "credentials": { "telegramApi": { "id": "WAIT_FOR_USER", "name": "Anchor_Telegram" } }
+    }
+  ],
+  "connections": {
+    "trabajar": { "main": [[{ "node": "trabajar_parse", "type": "main", "index": 0 }]] },
+    "trabajar_parse": { "main": [[{ "node": "html_trabajar", "type": "main", "index": 0 }]] },
+    "html_trabajar": {
+      "main": [
+        [{ "node": "html → binary", "type": "main", "index": 0 }],
+        [{ "node": "trabajar · ext → aplicante", "type": "main", "index": 0 }]
+      ]
+    },
+    "html → binary": {
+      "main": [
+        [{ "node": "gotenberg · color", "type": "main", "index": 0 }],
+        [{ "node": "gotenberg · bw", "type": "main", "index": 0 }]
+      ]
+    },
+    "gotenberg · color": { "main": [[{ "node": "merge · pdfs", "type": "main", "index": 0 }]] },
+    "gotenberg · bw": { "main": [[{ "node": "trabajar · print → impresora", "type": "main", "index": 0 }]] },
+    "merge · pdfs": { "main": [[{ "node": "rename · pdfs", "type": "main", "index": 0 }]] },
+    "rename · pdfs": {
+      "main": [
+        [{ "node": "trabajar · int → talento@", "type": "main", "index": 0 }],
+        [{ "node": "tg · trabajar → grupo", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1", "binaryMode": "separate" },
+  "versionId": "v1_anchor_trabajar",
+  "meta": { "templateCredsSetupCompleted": true, "instanceId": "anchor23_n8n" },
+  "id": "anchor_trabajar_flow",
+  "tags": []
+}

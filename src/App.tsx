@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router'
+import { Routes, Route, Navigate } from 'react-router'
 import Home from './pages/Home'
 import Historia from './pages/Historia'
 import Servicios from './pages/Servicios'
@@ -28,7 +28,8 @@ export default function App() {
       <Route path="/collabs" element={<Collabs />} />
       <Route path="/invitar" element={<JoinUs />} />
       <Route path="/join-us" element={<JoinUs />} />
-      <Route path="/trabajar" element={<Trabajar />} />
+      <Route path="/join" element={<Trabajar />} />
+      <Route path="/trabajar" element={<Navigate to="/join" replace />} />
       <Route path="/espacios" element={<Espacios />} />
     </Routes>
   )

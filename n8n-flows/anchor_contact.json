@@ -1,0 +1,306 @@
+{
+  "name": "anchor_contact",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "4ppiwv0wn5sc3c2vknff0uh0w2ysgsx3dv23y2ny",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [-7200, 1120],
+      "id": "webhook-contact",
+      "name": "contact"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json || {};\nconst body = raw.body ?? raw;\nconst a = body.survey_answers ?? body;\nconst m = body.metadata ?? {};\nconst submitted = m.submittedAt\n  ? new Date(m.submittedAt).toLocaleString('es-MX', { timeZone: 'America/Monterrey' })\n  : '—';\nconst esc = (s) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');\n\nreturn [{ json: {\n  type: body.type || 'contact_inquiry',\n  tracking_id: a.tracking_id || m.tracking_id || '—',\n  nombre: esc(a.contact_name || a.name || a.nombre || '—'),\n  telefono: esc(a.contact_phone || a.phone || a.telefono || m.phoneNumber || '—'),\n  correo: esc(a.contact_email || a.email || a.correo || '—'),\n  sucursal: a.contact_branch || 'general',\n  motivo: esc(a.contact_reason || a.razon || '—'),\n  mensaje: esc(a.contact_message || a.mensaje || '—'),\n  source: m.source || 'contact',\n  submitted_at_local: submitted,\n  submitted_at_utc: m.submittedAt || '—',\n  raw: body\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-6976, 1120],
+      "id": "contact-parse",
+      "name": "contact_parse"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analiza el siguiente mensaje de contacto recibido en ANCHOR:23 Beauty Club, Saltillo MX, y genera un análisis interno en español.\n\nDATOS:\n- Nombre: {{ $json.nombre }}\n- Sucursal: {{ $json.sucursal }}\n- Motivo: {{ $json.motivo }}\n- Mensaje: \"{{ $json.mensaje }}\"\n\nResponde SOLO con un objeto JSON exacto (sin markdown, sin texto extra):\n{\n  \"categoria\": \"queja|consulta|reservacion|felicitacion|informacion|otro\",\n  \"urgencia\": \"alta|media|baja\",\n  \"tono\": \"positivo|neutral|negativo|urgente\",\n  \"resumen\": \"1-2 oraciones del contexto y necesidad del contacto\",\n  \"accion_recomendada\": \"acción concreta y específica para el equipo\",\n  \"tiempo_respuesta\": \"inmediato|24h|48h|sin_urgencia\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [-6720, 1120],
+      "id": "llm-chain",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [-6784, 1328],
+      "id": "openai-model",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "WAIT_FOR_USER",
+          "name": "OpenAi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const survey = $('contact_parse').item.json;\nconst raw    = $input.first().json.text || $input.first().json.output || '{}';\nlet analysis;\ntry {\n  analysis = JSON.parse(raw.replace(/```json|```/g, '').trim());\n} catch(e) {\n  analysis = { categoria: 'otro', urgencia: 'media', tono: 'neutral', resumen: raw.slice(0, 200), accion_recomendada: 'Revisar manualmente', tiempo_respuesta: '24h' };\n}\nconst urgEmoji  = { alta:'🔴', media:'🟡', baja:'🟢' };\nconst tonoEmoji = { positivo:'😊', neutral:'😐', negativo:'😟', urgente:'⚠️' };\nconst urgencia_emoji = urgEmoji[analysis.urgencia]  || '⚪';\nconst tono_emoji     = tonoEmoji[analysis.tono]     || '⚪';\nreturn [{ json: { ...survey, analysis, urgencia_emoji, tono_emoji } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-6400, 1120],
+      "id": "llm-parse",
+      "name": "llm_parse_contact"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst a   = d.analysis || {};\nconst esc = (s) => String(s ?? '—').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');\nconst pretty = (s) => String(s || '—').replace(/_/g, ' ').replace(/\\b\\w/g, (c) => c.toUpperCase());\nconst urgEmoji  = { alta:'🔴', media:'🟡', baja:'🟢' };\nconst urg_e = urgEmoji[a.urgencia] || '⚪';\nconst isPartner = d.type === 'partner_inquiry';\nconst title = isPartner ? 'Nuevo Prospecto Partner' : 'Nuevo Contacto';\nconst subtitle = isPartner ? 'Expansión' : 'Entrada web';\n\nconst LOGO_DARK = 'https://raw.githubusercontent.com/marcogll/anchor23_landing/main/public/logo_anchor23_white.svg';\nconst LOGO_LIGHT = 'https://raw.githubusercontent.com/marcogll/anchor23_landing/main/public/logo_anchor23_dark.svg';\n\n// Colors\nconst C_CHARCOAL = '#3F362E';\nconst C_EARTH = '#6F5E4F';\nconst C_TAUPE = '#B8A89A';\nconst C_CREAM = '#EFE7DE';\nconst C_BONE = '#F6F1EC';\nconst C_BG = '#F6F1EC';\nconst C_WHITE = '#FFFFFF';\nconst F_DISPLAY = 'font-family:Cinzel,Georgia,serif';\nconst F_BODY = 'font-family:Inter,Arial,sans-serif';\n\nconst html_admin = `<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<style>\nbody,table,td{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline}\nbody{background:#F6F1EC;font-family:Inter,Arial,sans-serif;-webkit-text-size-adjust:100%}\nimg{border:0;outline:none;text-decoration:none;display:block}\n@media only screen and (max-width:600px){\n  .wrapper{width:100%!important;min-width:100%!important}\n  .content-pad{padding:16px 14px!important}\n}\n</style>\n</head>\n<body>\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#F6F1EC;padding:24px 12px\">\n<tr><td align=\"center\">\n<table class=\"wrapper\" width=\"580\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#FFFFFF;border-radius:0;overflow:hidden;max-width:580px;box-shadow:0 2px 20px rgba(63,54,46,.08)\">\n\n<tr><td style=\"background:#3F362E;padding:24px 28px\">\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>\n<td style=\"vertical-align:middle\">\n<img src=\"${LOGO_DARK}\" width=\"48\" alt=\"ANCHOR:23\" style=\"display:block;margin-bottom:8px\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#B8A89A\">${esc(subtitle)}</div>\n</td>\n<td align=\"right\" style=\"vertical-align:middle\">\n<div style=\"background:#6F5E4F;padding:5px 13px;display:inline-block\">\n<span style=\"font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:600;color:#F6F1EC;letter-spacing:.05em\">✉️ Nuevo</span>\n</div>\n</td>\n</tr></table>\n</td></tr>\n\n<tr><td style=\"background:#F6F1EC;padding:20px 28px;border-bottom:1px solid #EFE7DE\">\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>\n<td style=\"vertical-align:middle\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#B8A89A;margin-bottom:4px\">${esc(isPartner ? 'Prospecto Partner' : 'Contacto Web')}</div>\n<div style=\"font-family:Cinzel,Georgia,serif;font-size:22px;color:#3F362E;line-height:1.2;margin-bottom:6px;letter-spacing:.03em\">${esc(d.nombre)}</div>\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:12px;color:#6F5E4F\">${esc(d.telefono)}  ·  ${esc(d.correo)}</div>\n</td>\n<td align=\"right\" style=\"vertical-align:top;padding-left:12px\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;color:#B8A89A;text-align:right;margin-bottom:3px\">${esc(d.submitted_at_local)}</div>\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:8px;color:#B8A89A;text-align:right;letter-spacing:.04em\">${esc(d.tracking_id)}</div>\n</td>\n</tr></table>\n</td></tr>\n\n<tr><td class=\"content-pad\" style=\"padding:20px 28px;border-bottom:1px solid #EFE7DE\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#B8A89A;margin-bottom:8px\">Mensaje</div>\n<div style=\"background:#F6F1EC;padding:14px 16px;font-family:Georgia,serif;font-size:14px;color:#3F362E;line-height:1.75;font-style:italic;border-left:3px solid #6F5E4F\">\"${esc(d.mensaje)}\"</div>\n</td></tr>\n\n<tr><td class=\"content-pad\" style=\"padding:20px 28px;border-bottom:1px solid #EFE7DE\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#B8A89A;margin-bottom:12px\">Análisis</div>\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin-bottom:12px\"><tr>\n<td style=\"width:33%;padding-right:10px;vertical-align:top\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#B8A89A;margin-bottom:3px\">Categoría</div>\n<div style=\"font-family:Cinzel,Georgia,serif;font-size:14px;color:#3F362E\">${esc(a.categoria||'—')}</div>\n</td>\n<td style=\"width:33%;padding-right:10px;vertical-align:top\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#B8A89A;margin-bottom:3px\">Urgencia</div>\n<div style=\"font-family:Cinzel,Georgia,serif;font-size:14px;color:#3F362E\">${urg_e} ${esc(a.urgencia||'—')}</div>\n</td>\n<td style=\"width:33%;vertical-align:top\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#B8A89A;margin-bottom:3px\">Responder en</div>\n<div style=\"font-family:Cinzel,Georgia,serif;font-size:14px;color:#3F362E\">${esc(a.tiempo_respuesta||'—').replace(/_/g,' ')}</div>\n</td>\n</tr></table>\n<div style=\"font-family:Georgia,serif;font-size:13px;color:#3F362E;line-height:1.7;background:#F6F1EC;border-radius:0;padding:12px 14px;margin-bottom:12px;border-left:2px solid #B8A89A\">${esc(a.resumen||'—')}</div>\n<div style=\"background:#3F362E;padding:12px 16px\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#B8A89A;margin-bottom:3px\">Acción recomendada</div>\n<div style=\"font-family:Georgia,serif;font-size:13px;color:#F6F1EC;line-height:1.5\">${esc(a.accion_recomendada||'—')}</div>\n</div>\n</td></tr>\n\n<tr><td style=\"background:#3F362E;padding:14px 28px\">\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>\n<td style=\"font-family:Inter,Arial,sans-serif;font-style:italic;font-size:11px;color:#B8A89A\">ANCHOR:23 · Beauty Club</td>\n<td align=\"right\" style=\"font-family:Inter,Arial,sans-serif;font-size:8px;color:#6F5E4F;letter-spacing:.06em\">${esc(d.tracking_id)}</td>\n</tr></table>\n</td></tr>\n\n</table>\n</td></tr>\n</table>\n</body></html>`;\n\nconst html_email = `<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<style>\nbody,table,td{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline}\nbody{background:#F6F1EC;font-family:Inter,Arial,sans-serif;-webkit-text-size-adjust:100%}\nimg{border:0;outline:none;text-decoration:none;display:block}\n@media only screen and (max-width:600px){\n  .wrapper{width:100%!important;min-width:100%!important}\n  .content-pad{padding:20px 16px!important}\n}\n</style>\n</head>\n<body>\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#F6F1EC;padding:24px 12px\">\n<tr><td align=\"center\">\n<table class=\"wrapper\" width=\"560\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#FFFFFF;border-radius:0;overflow:hidden;max-width:560px;box-shadow:0 2px 20px rgba(63,54,46,.08)\">\n\n<tr><td style=\"background:#3F362E;padding:32px 32px 24px\">\n<img src=\"${LOGO_DARK}\" width=\"60\" alt=\"ANCHOR:23\" style=\"display:block;margin-bottom:16px\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#B8A89A;margin-bottom:6px\">Contacto</div>\n<div style=\"font-family:Cinzel,Georgia,serif;font-size:26px;font-weight:400;color:#F6F1EC;line-height:1.15;letter-spacing:.04em\">Hemos recibido tu mensaje</div>\n</td></tr>\n\n<tr><td class=\"content-pad\" style=\"padding:28px 32px\">\n<p style=\"font-family:Inter,Arial,sans-serif;font-size:15px;line-height:1.85;color:#3F362E;margin:0 0 20px\">Hola <strong>${esc(d.nombre)}</strong>,</p>\n<p style=\"font-family:Inter,Arial,sans-serif;font-size:15px;line-height:1.85;color:#3F362E;margin:0 0 20px\">${isPartner ? 'Gracias por tu interés en formar parte de ANCHOR:23. Nuestro equipo directivo revisará tu información y te contactará para continuar.' : 'Recibimos tu mensaje correctamente. Nuestro equipo revisará tu solicitud y te responderá a la brevedad.'}</p>\n\n<div style=\"background:#F6F1EC;border-left:3px solid #6F5E4F;padding:14px 18px;margin-bottom:22px\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#B8A89A;margin-bottom:6px\">Tu mensaje</div>\n<div style=\"font-family:Georgia,serif;font-size:14px;color:#3F362E;line-height:1.6;font-style:italic\">\"${esc(d.mensaje)}\"</div>\n</div>\n\n<div style=\"border-top:1px solid #EFE7DE;margin:24px 0 16px\"></div>\n\n<p style=\"font-family:Inter,Arial,sans-serif;font-size:13px;line-height:1.7;color:#B8A89A\">\nSi tienes alguna otra pregunta, escríbenos a <a href=\"mailto:hello@anchor23.mx\" style=\"color:#6F5E4F;text-decoration:none;font-weight:500\">hello@anchor23.mx</a>\n</p>\n</td></tr>\n\n<tr><td style=\"background:#F6F1EC;padding:20px 32px;text-align:center\">\n<p style=\"font-family:Cinzel,Georgia,serif;font-size:12px;letter-spacing:3px;color:#B8A89A;text-transform:uppercase;margin:0 0 4px\">ANCHOR:23</p>\n<p style=\"font-family:Inter,Arial,sans-serif;font-size:11px;color:#B8A89A;margin:0;font-style:italic\">Belleza anclada en exclusividad</p>\n</td></tr>\n\n</table>\n</td></tr>\n</table>\n</body></html>`;\n\nconst bw = (html) => html.replace('</head>', `<style>body{background:#fff!important}*{color:#000!important;border-color:#999!important;box-shadow:none!important}table,td,div,span{background:#fff!important}img{filter:grayscale(100%) contrast(1.1)!important}@page{size:A4;margin:0}</style></head>`);\nconst slug = (s) => String(s || 'registro').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_|_$/g, '').toLowerCase();\n\nreturn [{ json: {\n  _from_email: 'ANCHOR:23 <hello@anchor23.mx>',\n  ...d,\n  email_to: d.correo,\n  admin_to: 'hello@anchor23.mx',\n  email_subject: `ANCHOR:23 recibió tu mensaje · ${d.nombre}`,\n  admin_subject: `${title} · ${d.nombre}`,\n  html_email,\n  html_admin,\n  html_external: html_email,\n  html_internal: html_admin,\n  html_external_bw: bw(html_email),\n  html_internal_bw: bw(html_admin),\n  filename_external: `contact_${slug(d.nombre)}_external.html`,\n  filename_internal: `contact_${slug(d.nombre)}_internal.html`,\n  filename_external_bw: `contact_${slug(d.nombre)}_external_bw.html`,\n  filename_internal_bw: `contact_${slug(d.nombre)}_internal_bw.html`,\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-6192, 1120],
+      "id": "html-contact",
+      "name": "html_contact"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nfunction sanitize(html) {\n  if (!html) return null;\n  return html\n    .replace(/<link[^>]*>/gi, '')\n    .replace(/<script[^>]*>[\\s\\S]*?<\\/script>/gi, '')\n    .replace(/<img[^>]*>/gi, '')\n    .replace(/@import[^;]+;/gi, '')\n    .replace(/url\\(['\"]?https?:\\/\\/[^)'\"\\s]+['\"]?\\)/gi, 'none');\n}\nconst slug = (s) => String(s || 'doc')\n  .normalize('NFD').replace(/[\\u0300-\\u036f]/g,'')\n  .replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/,'').toLowerCase();\nconst cleanColor = sanitize(d.html_internal);\nconst cleanBW    = sanitize(d.html_internal_bw);\nif (!cleanColor) throw new Error('html_internal vacío');\nconst base = `${slug(d.tracking_id)}_${slug(d.nombre)}`;\nconst binary = {\n  html_color: await this.helpers.prepareBinaryData(Buffer.from(cleanColor,'utf-8'),'index.html','text/html'),\n  html_bw:    await this.helpers.prepareBinaryData(Buffer.from(cleanBW||cleanColor,'utf-8'),'index.html','text/html'),\n};\nreturn [{ json: { ...d, _base: base }, binary }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-5952, 1120],
+      "id": "html-to-binary",
+      "name": "html → binary"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://100.98.169.44:3001/forms/chromium/convert/html",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            { "parameterType": "formBinaryData", "name": "files", "inputDataFieldName": "html_color" },
+            { "name": "paperWidth", "value": "8.27" },
+            { "name": "paperHeight", "value": "11.69" },
+            { "name": "marginTop", "value": "0.4" },
+            { "name": "marginBottom", "value": "0.4" },
+            { "name": "marginLeft", "value": "0.4" },
+            { "name": "marginRight", "value": "0.4" },
+            { "name": "printBackground", "value": "true" }
+          ]
+        },
+        "options": {
+          "response": { "response": { "responseFormat": "file", "outputPropertyName": "pdf_color" } }
+        }
+      },
+      "name": "gotenberg · color",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-5744, 1040],
+      "id": "gotenberg-color"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://100.98.169.44:3001/forms/chromium/convert/html",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            { "parameterType": "formBinaryData", "name": "files", "inputDataFieldName": "html_bw" },
+            { "name": "paperWidth", "value": "8.27" },
+            { "name": "paperHeight", "value": "11.69" },
+            { "name": "marginTop", "value": "0.4" },
+            { "name": "marginBottom", "value": "0.4" },
+            { "name": "marginLeft", "value": "0.4" },
+            { "name": "marginRight", "value": "0.4" },
+            { "name": "printBackground", "value": "true" }
+          ]
+        },
+        "options": {
+          "response": { "response": { "responseFormat": "file", "outputPropertyName": "pdf_bw" } }
+        }
+      },
+      "name": "gotenberg · bw",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-5744, 1200],
+      "id": "gotenberg-bw"
+    },
+    {
+      "parameters": {
+        "jsCode": "const all = $input.all();\nconst colorItem = all.find(i => i.binary?.pdf_color) || all[0];\nconst bwItem    = all.find(i => i.binary?.pdf_bw)    || all[1];\nconst bin = {};\nif (colorItem?.binary?.pdf_color) bin.pdf_color = colorItem.binary.pdf_color;\nif (bwItem?.binary?.pdf_bw)       bin.pdf_bw    = bwItem.binary.pdf_bw;\nif (!bin.pdf_color) throw new Error('pdf_color no llegó de Gotenberg');\nreturn [{ json: { ...(colorItem?.json || {}) }, binary: bin }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-5488, 1040],
+      "id": "merge-pdfs",
+      "name": "merge · pdfs"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item  = $input.first();\nconst base  = item.json._base || 'anchor_doc';\nconst bin   = item.binary || {};\nif (bin.pdf_color) bin.pdf_color = { ...bin.pdf_color, fileName: `${base}_color.pdf`, mimeType: 'application/pdf' };\nif (bin.pdf_bw)    bin.pdf_bw    = { ...bin.pdf_bw,    fileName: `${base}_bw.pdf`,    mimeType: 'application/pdf' };\nreturn [{ json: { ...item.json }, binary: bin }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-5248, 1040],
+      "id": "rename-pdfs",
+      "name": "rename · pdfs"
+    },
+    {
+      "parameters": {
+        "fromEmail": "ANCHOR:23 <hello@anchor23.mx>",
+        "toEmail": "={{ $json.correo }}",
+        "subject": "={{ `✉️ ANCHOR:23 recibió tu mensaje · ${$json.nombre}` }}",
+        "html": "={{ $('html_contact').item.json.html_email }}",
+        "options": {
+          "appendAttribution": false,
+          "ccEmail": "",
+          "bccEmail": ""
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [-5248, 1280],
+      "id": "email-external",
+      "name": "contact · ext → cliente",
+      "credentials": {
+        "smtp": { "id": "WAIT_FOR_USER", "name": "anchor_smtp" }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "ANCHOR:23 <hello@anchor23.mx>",
+        "toEmail": "hello@anchor23.mx",
+        "subject": "={{ `${$('llm_parse_contact').item.json.urgencia_emoji} Nuevo Contacto · ${$('html_contact').item.json.nombre}` }}",
+        "html": "={{ $('html_contact').item.json.html_admin }}",
+        "options": {
+          "appendAttribution": false,
+          "attachments": "pdf_color",
+          "ccEmail": "",
+          "bccEmail": ""
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [-4992, 1040],
+      "id": "email-internal",
+      "name": "contact · int → hello@",
+      "credentials": {
+        "smtp": { "id": "WAIT_FOR_USER", "name": "anchor_smtp" }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "ANCHOR:23 <hello@anchor23.mx>",
+        "toEmail": "hello@anchor23.mx",
+        "subject": "={{ `🖨️ Contacto · ${$('html_contact').item.json.nombre}` }}",
+        "options": {
+          "appendAttribution": false,
+          "attachments": "pdf_bw",
+          "ccEmail": ""
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [-5248, 1456],
+      "id": "email-print",
+      "name": "contact · print → impresora",
+      "credentials": {
+        "smtp": { "id": "WAIT_FOR_USER", "name": "anchor_smtp" }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "-1000000000000",
+        "text": "={{ (() => {\nconst d = $('html_contact').item.json;\nconst a = d.analysis || {};\nconst div = '─────────────────────';\nconst pretty = (s) => String(s||'—').replace(/_/g,' ').replace(/\\b\\w/g,c=>c.toUpperCase());\nconst urgEmoji  = { alta:'🔴', media:'🟡', baja:'🟢' };\nconst urg_e = urgEmoji[a.urgencia] || '⚪';\nreturn [\n  `✉️ *Nuevo Contacto · ANCHOR:23*`,\n  div,\n  `👤 *Nombre:* ${d.nombre}`,\n  `📞 ${d.telefono || '—'}`,\n  `📧 ${d.correo || '—'}`,\n  d.motivo && d.motivo !== '—' ? `📌 *Motivo:* ${pretty(d.motivo)}` : '',\n  div,\n  `💬 _\\\"${d.mensaje}\\\"_`,\n  div,\n  `${urg_e} *Urgencia:* ${a.urgencia || '—'}  ·  📂 ${a.categoria || '—'}`,\n  a.resumen ? `\\n📝 ${a.resumen}` : '',\n  a.accion_recomendada ? `\\n🎯 *Acción:* ${a.accion_recomendada}` : '',\n  div,\n  `🕐 ${d.submitted_at_local}`,\n  `🔖 \\`${d.tracking_id}\\``\n].filter(x => x !== '').join('\\n');\n})() }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "disable_web_page_preview": true,
+          "parse_mode": "Markdown",
+          "message_thread_id": 0
+        }
+      },
+      "name": "tg · contact → grupo",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [-4992, 1184],
+      "id": "tg-contact",
+      "credentials": {
+        "telegramApi": { "id": "WAIT_FOR_USER", "name": "Anchor_Telegram" }
+      }
+    }
+  ],
+  "connections": {
+    "contact": {
+      "main": [[{ "node": "contact_parse", "type": "main", "index": 0 }]]
+    },
+    "contact_parse": {
+      "main": [[{ "node": "Basic LLM Chain", "type": "main", "index": 0 }]]
+    },
+    "Basic LLM Chain": {
+      "main": [[{ "node": "llm_parse_contact", "type": "main", "index": 0 }]]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [[{ "node": "Basic LLM Chain", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "llm_parse_contact": {
+      "main": [[{ "node": "html_contact", "type": "main", "index": 0 }]]
+    },
+    "html_contact": {
+      "main": [
+        [{ "node": "html → binary", "type": "main", "index": 0 }],
+        [{ "node": "contact · ext → cliente", "type": "main", "index": 0 }]
+      ]
+    },
+    "html → binary": {
+      "main": [
+        [{ "node": "gotenberg · color", "type": "main", "index": 0 }],
+        [{ "node": "gotenberg · bw", "type": "main", "index": 0 }]
+      ]
+    },
+    "gotenberg · color": {
+      "main": [[{ "node": "merge · pdfs", "type": "main", "index": 0 }]]
+    },
+    "gotenberg · bw": {
+      "main": [[{ "node": "contact · print → impresora", "type": "main", "index": 0 }]]
+    },
+    "merge · pdfs": {
+      "main": [[{ "node": "rename · pdfs", "type": "main", "index": 0 }]]
+    },
+    "rename · pdfs": {
+      "main": [
+        [{ "node": "contact · int → hello@", "type": "main", "index": 0 }],
+        [{ "node": "tg · contact → grupo", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "v1_anchor_contact",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "anchor23_n8n"
+  },
+  "id": "anchor_contact_flow",
+  "tags": []
+}

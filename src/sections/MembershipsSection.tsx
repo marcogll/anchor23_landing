@@ -21,6 +21,7 @@ export default function MembershipsSection() {
   const title = t('members.title') as string;
   const subtitle = t('members.subtitle') as string;
   const popular = t('members.popular') as string;
+  const intro = t('members.intro') as string;
   const subscribe = t('members.subscribe') as string;
   const request = t('members.request') as string;
   const tiers = (t('members.tiers') as unknown) as { name: string; price: string; period: string; desc: string; features: string[] }[];
@@ -54,6 +55,7 @@ export default function MembershipsSection() {
                   <div className="text-center mb-8">
                     <span className={`font-display text-[32px] md:text-[36px] ${highlighted ? 'text-earth' : 'text-charcoal'}`}>{tier.price}</span>
                     <span className={`font-body text-[14px] ${highlighted ? 'text-cream/60' : 'text-charcoal/60'}`}>{tier.period}</span>
+                    <p className="font-display text-[10px] uppercase tracking-[2px] text-earth mt-2">{intro}</p>
                   </div>
                   <ul className="space-y-3 mb-8 flex-1">
                     {tier.features.map((feature, fIndex) => (

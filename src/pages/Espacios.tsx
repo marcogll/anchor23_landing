@@ -5,10 +5,11 @@ import { CheckCircle } from 'lucide-react';
 import Navigation from '../sections/Navigation';
 import Footer from '../sections/Footer';
 import { useLenis } from '../hooks/useLenis';
+import { SITE } from '../lib/site';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const WEBHOOK_URL = 'https://flows.soul23.cloud/webhook/okouvwz8y68mnuju7bzp3dv8jq9v9lmlo7divex';
+const WEBHOOK_URL = SITE.webhooks.espacios;
 
 const modalidades = [
   'Renta de mesa (por hora)',

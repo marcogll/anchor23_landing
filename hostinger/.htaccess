@@ -1,0 +1,14 @@
+# ANCHOR:23 — .htaccess canónico para hosting estático (Apache/Hostinger).
+# Subir a la raíz del public_html junto al index.html.
+RewriteEngine On
+RewriteBase /
+RewriteRule ^index\.html$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.html [L]
+
+# site-config.js lleva las credenciales públicas y debe rotar sin pelear
+# con caché del navegador.
+<Files "site-config.js">
+  Header set Cache-Control "no-cache, no-store, must-revalidate"
+</Files>

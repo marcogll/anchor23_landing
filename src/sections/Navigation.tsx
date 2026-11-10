@@ -52,7 +52,7 @@ export default function Navigation() {
     { to: '/historia', label: t('nav.about') as string },
     { to: '/servicios', label: t('nav.services') as string },
     { to: '/membresias', label: t('nav.memberships') as string },
-    { to: '/trabajar', label: t('nav.work') as string },
+    { to: '/join', label: t('nav.work') as string },
     { to: '/espacios', label: t('nav.spaces') as string },
     { to: '/contacto', label: t('nav.contact') as string },
   ];

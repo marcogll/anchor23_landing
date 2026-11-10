@@ -5,10 +5,11 @@ import { CheckCircle } from 'lucide-react';
 import Navigation from '../sections/Navigation';
 import Footer from '../sections/Footer';
 import { useLenis } from '../hooks/useLenis';
+import { SITE } from '../lib/site';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const WEBHOOK_URL = 'https://flows.soul23.cloud/webhook/okouvwz8y68mnuju7bzp3dv8jq9v9lmlo7divex';
+const WEBHOOK_URL = SITE.webhooks.trabajar;
 
 const puestos = [
   'Manicurista',
@@ -46,7 +47,7 @@ export default function Trabajar() {
     e.preventDefault();
     setIsSubmitting(true);
     setError('');
-    const payload = { form: 'trabajar', ...formData, instagram: formData.instagram.replace(/^@+/, ''), device_type: window.innerWidth < 768 ? 'mobile' : 'desktop', timestamp_utc: new Date().toISOString(), source: 'trabajar_page', page: '/trabajar' };
+    const payload = { form: 'trabajar', ...formData, instagram: formData.instagram.replace(/^@+/, ''), device_type: window.innerWidth < 768 ? 'mobile' : 'desktop', timestamp_utc: new Date().toISOString(), source: 'trabajar_page', page: '/join' };
     try {
       const response = await fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (response.ok) setIsSuccess(true); else setError('No pudimos enviar tu solicitud. Intenta de nuevo.');

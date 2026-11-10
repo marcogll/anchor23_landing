@@ -1,0 +1,95 @@
+{
+  "name": "anchor_join_us",
+  "nodes": [
+    {
+      "parameters": { "httpMethod": "POST", "path": "okouvwz8y68mnuju7bzp3dv8jq9v9lmlo7divex", "options": {} },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [-12000, 4000],
+      "id": "wh-joinus",
+      "name": "join_us"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json || {};\nconst body = raw.body ?? raw;\nconst a = body.survey_answers ?? body;\nconst m = body.metadata ?? {};\nconst submitted = m.submittedAt\n  ? new Date(m.submittedAt).toLocaleString('es-MX', { timeZone: 'America/Monterrey' })\n  : '—';\nconst esc = (s) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');\n\n// Soporta slider (valor string) y multiselect (array)\nconst distancia = Array.isArray(a.distancia) ? a.distancia.join(', ') : (a.distancia || '—');\n\nreturn [{ json: {\n  type: body.type || 'waitlist',\n  tracking_id: a.tracking_id || m.tracking_id || '—',\n  nombre: esc(a.nombre || a.name || '—'),\n  email: esc(a.email || a.correo || '—'),\n  telefono: esc(a.telefono || a.phone || m.phoneNumber || '—'),\n  distancia: esc(distancia),\n  descripcion: esc(a.descripcion || a.why || '—'),\n  instagram: esc(a.instagram || '—'),\n  source: m.source || 'join_us_page',\n  submitted_at_local: submitted,\n  submitted_at_utc: m.submittedAt || '—',\n  raw: body\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-11776, 4000],
+      "id": "joinus-parse",
+      "name": "join_us_parse"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst esc = (s) => String(s ?? '—').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');\nconst LOGO_DARK = 'https://raw.githubusercontent.com/marcogll/anchor23_landing/main/public/logo_anchor23_white.svg';\n\nconst html_email = `<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<style>\nbody,table,td{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline}\nbody{background:#F6F1EC;font-family:Inter,Arial,sans-serif;-webkit-text-size-adjust:100%}\nimg{border:0;outline:none;text-decoration:none;display:block}\n@media only screen and (max-width:600px){\n  .wrapper{width:100%!important;min-width:100%!important}\n  .content-pad{padding:20px 16px!important}\n}\n</style>\n</head>\n<body>\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#F6F1EC;padding:24px 12px\">\n<tr><td align=\"center\">\n<table class=\"wrapper\" width=\"560\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#FFFFFF;border-radius:0;overflow:hidden;max-width:560px;box-shadow:0 2px 20px rgba(63,54,46,.08)\">\n\n<tr><td style=\"background:#3F362E;padding:32px 32px 24px\">\n<img src=\"${LOGO_DARK}\" width=\"60\" alt=\"ANCHOR:23\" style=\"display:block;margin-bottom:16px\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#B8A89A;margin-bottom:6px\">Lista de Espera</div>\n<div style=\"font-family:Cinzel,Georgia,serif;font-size:26px;font-weight:400;color:#F6F1EC;line-height:1.15;letter-spacing:.04em\">Gracias por tu interés</div>\n</td></tr>\n\n<tr><td class=\"content-pad\" style=\"padding:28px 32px\">\n<p style=\"font-family:Inter,Arial,sans-serif;font-size:15px;line-height:1.85;color:#3F362E;margin:0 0 20px\">Hola <strong>${esc(d.nombre)}</strong>,</p>\n<p style=\"font-family:Inter,Arial,sans-serif;font-size:15px;line-height:1.85;color:#3F362E;margin:0 0 20px\">Hemos recibido tu solicitud para unirte a la lista de espera de <strong>ANCHOR:23</strong>. Nuestro equipo revisará tu perfil y te contactaremos pronto para completar el proceso.</p>\n\n<div style=\"background:#F6F1EC;border-left:3px solid #6F5E4F;padding:14px 18px;margin-bottom:22px\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#B8A89A;margin-bottom:6px\">Tu registro</div>\n<div style=\"font-family:Georgia,serif;font-size:14px;color:#3F362E;line-height:1.6\">${d.descripcion&&d.descripcion!=='—'?'“'+esc(d.descripcion)+'”':'—'}</div>\n</div>\n\n<div style=\"border-top:1px solid #EFE7DE;margin:24px 0 16px\"></div>\n<p style=\"font-family:Inter,Arial,sans-serif;font-size:13px;line-height:1.7;color:#B8A89A\">\nEl acceso a ANCHOR:23 es exclusivo. Te mantendremos informada sobre el estado de tu solicitud.<br><br>\n¿Preguntas? <a href=\"mailto:hello@anchor23.mx\" style=\"color:#6F5E4F;text-decoration:none;font-weight:500\">hello@anchor23.mx</a>\n</p>\n</td></tr>\n\n<tr><td style=\"background:#F6F1EC;padding:20px 32px;text-align:center\">\n<p style=\"font-family:Cinzel,Georgia,serif;font-size:12px;letter-spacing:3px;color:#B8A89A;text-transform:uppercase;margin:0 0 4px\">ANCHOR:23</p>\n<p style=\"font-family:Inter,Arial,sans-serif;font-size:11px;color:#B8A89A;margin:0;font-style:italic\">Belleza anclada en exclusividad</p>\n</td></tr>\n\n</table>\n</td></tr>\n</table>\n</body></html>`;\n\nconst html_admin = `<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<style>\nbody,table,td{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline}\nbody{background:#F6F1EC;font-family:Inter,Arial,sans-serif;-webkit-text-size-adjust:100%}\nimg{border:0;outline:none;text-decoration:none;display:block}\n@media only screen and (max-width:600px){\n  .wrapper{width:100%!important;min-width:100%!important}\n  .content-pad{padding:14px 16px!important}\n}\n</style>\n</head>\n<body>\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#F6F1EC;padding:24px 12px\">\n<tr><td align=\"center\">\n<table class=\"wrapper\" width=\"580\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#FFFFFF;border-radius:0;overflow:hidden;max-width:580px;box-shadow:0 2px 20px rgba(63,54,46,.10)\">\n\n<tr><td style=\"background:#3F362E;padding:20px 24px\">\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>\n<td><img src=\"${LOGO_DARK}\" width=\"48\" alt=\"ANCHOR:23\" style=\"display:block;margin-bottom:6px\"><div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#B8A89A\">Lista de Espera · CRM</div></td>\n<td align=\"right\"><div style=\"background:#6F5E4F;padding:5px 13px;display:inline-block\"><span style=\"font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:600;color:#F6F1EC\">⭐ Nuevo registro</span></div></td>\n</tr></table>\n</td></tr>\n\n<tr><td style=\"background:#F6F1EC;padding:18px 24px;border-bottom:1px solid #EFE7DE\">\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>\n<td style=\"vertical-align:middle\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#B8A89A;margin-bottom:3px\">Nuevo registro</div>\n<div style=\"font-family:Cinzel,Georgia,serif;font-size:22px;color:#3F362E;line-height:1.2;margin-bottom:4px;letter-spacing:.03em\">${esc(d.nombre)}</div>\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:12px;color:#6F5E4F\">📞 ${esc(d.telefono)}  ·  📧 ${esc(d.email)}</div>\n${d.instagram&&d.instagram!=='—'?`<div style=\"font-family:Inter,Arial,sans-serif;font-size:12px;color:#6F5E4F;margin-top:2px\">📸 ${esc(d.instagram)}</div>`:''}\n</td>\n<td align=\"right\" style=\"vertical-align:top;padding-left:12px\">\n<div style=\"background:#6F5E4F;padding:6px 12px;text-align:center;margin-bottom:6px\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#B8A89A;margin-bottom:2px\">Distancia</div>\n<div style=\"font-family:Cinzel,Georgia,serif;font-size:13px;color:#F6F1EC\">${esc(d.distancia)}</div></div>\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;color:#B8A89A;text-align:right\">${esc(d.submitted_at_local)}</div>\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:8px;color:#B8A89A;text-align:right;margin-top:2px\">${esc(d.tracking_id)}</div>\n</td>\n</tr></table>\n</td></tr>\n\n<tr><td class=\"content-pad\" style=\"padding:18px 24px\">\n<div style=\"font-family:Inter,Arial,sans-serif;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#B8A89A;margin-bottom:10px\">¿Por qué quiere vivir la experiencia ANCHOR:23?</div>\n<div style=\"background:#F6F1EC;padding:14px 16px;font-family:Georgia,serif;font-size:13px;color:#3F362E;line-height:1.75;font-style:italic;border-left:3px solid #6F5E4F\">\"${esc(d.descripcion||'—')}\"</div>\n</td></tr>\n\n<tr><td style=\"background:#3F362E;padding:14px 24px\">\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>\n<td style=\"font-family:Inter,Arial,sans-serif;font-style:italic;font-size:11px;color:#B8A89A\">ANCHOR:23 · CRM</td>\n<td align=\"right\" style=\"font-family:Inter,Arial,sans-serif;font-size:8px;color:#6F5E4F;letter-spacing:.06em\">${esc(d.tracking_id)}</td>\n</tr></table>\n</td></tr>\n\n</table>\n</td></tr>\n</table>\n</body></html>`;\n\nconst slug = (s) => String(s||'registro').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'').toLowerCase();\n\nreturn [{ json: {\n  _from_email: 'ANCHOR:23 <hello@anchor23.mx>',\n  ...d,\n  email_to: d.email,\n  admin_to: 'hello@anchor23.mx',\n  email_subject: `Lista de Espera · ANCHOR:23 · ${d.nombre}`,\n  admin_subject: `⭐ Nuevo registro · ${d.nombre}`,\n  html_email,\n  html_admin,\n  html_external: html_email,\n  html_internal: html_admin,\n  filename_external: `waitlist_${slug(d.nombre)}_ext.html`,\n  filename_internal: `waitlist_${slug(d.nombre)}_int.html`,\n}}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-11488, 4000],
+      "id": "html-joinus",
+      "name": "html_join_us"
+    },
+    {
+      "parameters": {
+        "fromEmail": "ANCHOR:23 <hello@anchor23.mx>",
+        "toEmail": "={{ $json.email }}",
+        "subject": "={{ `⭐ Lista de Espera · ANCHOR:23 · ${$json.nombre}` }}",
+        "html": "={{ $('html_join_us').item.json.html_email }}",
+        "options": { "appendAttribution": false, "ccEmail": "", "bccEmail": "" }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [-11200, 4144],
+      "id": "email-ext-joinus",
+      "name": "join_us · ext → cliente",
+      "credentials": { "smtp": { "id": "WAIT_FOR_USER", "name": "anchor_smtp" } }
+    },
+    {
+      "parameters": {
+        "fromEmail": "ANCHOR:23 <hello@anchor23.mx>",
+        "toEmail": "hello@anchor23.mx",
+        "subject": "={{ `⭐ Nuevo registro · ${$('html_join_us').item.json.nombre}` }}",
+        "html": "={{ $('html_join_us').item.json.html_admin }}",
+        "options": { "appendAttribution": false, "ccEmail": "", "bccEmail": "" }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [-10960, 4000],
+      "id": "email-int-joinus",
+      "name": "join_us · int → hello@",
+      "credentials": { "smtp": { "id": "WAIT_FOR_USER", "name": "anchor_smtp" } }
+    },
+    {
+      "parameters": {
+        "chatId": "-1000000000000",
+        "text": "={{ (() => {\nconst d = $('html_join_us').item.json;\nconst div = '─────────────────────';\nreturn [\n  `⭐ *Nuevo Registro · Lista de Espera*`,\n  div,\n  `👤 *Nombre:* ${d.nombre}`,\n  `📧 ${d.email || '—'}`,\n  `📞 ${d.telefono || '—'}`,\n  d.instagram && d.instagram !== '—' ? `📸 ${d.instagram}` : '',\n  d.distancia && d.distancia !== '—' ? `📍 *Distancia:* ${d.distancia}` : '',\n  div,\n  d.descripcion && d.descripcion !== '—' ? `💬 _\"${d.descripcion}\"_` : '',\n  div,\n  `🕐 ${d.submitted_at_local}`,\n  `🔖 \\`${d.tracking_id || '—'}\\``\n].filter(x => x !== '').join('\\n');\n})() }}",
+        "additionalFields": { "appendAttribution": false, "disable_web_page_preview": true, "parse_mode": "Markdown", "message_thread_id": 0 }
+      },
+      "name": "tg · join_us → grupo",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [-10960, 4112],
+      "id": "tg-joinus",
+      "credentials": { "telegramApi": { "id": "WAIT_FOR_USER", "name": "Anchor_Telegram" } }
+    }
+  ],
+  "connections": {
+    "join_us": { "main": [[{ "node": "join_us_parse", "type": "main", "index": 0 }]] },
+    "join_us_parse": { "main": [[{ "node": "html_join_us", "type": "main", "index": 0 }]] },
+    "html_join_us": {
+      "main": [
+        [{ "node": "join_us · ext → cliente", "type": "main", "index": 0 }],
+        [{ "node": "join_us · int → hello@", "type": "main", "index": 0 }]
+      ]
+    },
+    "join_us · int → hello@": {
+      "main": [[{ "node": "tg · join_us → grupo", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1", "binaryMode": "separate" },
+  "versionId": "v1_anchor_join_us",
+  "meta": { "templateCredsSetupCompleted": true, "instanceId": "anchor23_n8n" },
+  "id": "anchor_join_us_flow",
+  "tags": []
+}

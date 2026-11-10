@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { X, CheckCircle } from 'lucide-react';
+import { SITE } from '../lib/site';
 
 interface JoinWaitlistModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/placeholder/'; // Reemplazar con tu URL real
+// Invitaciones → sistema Anchor:23 vía webhook n8n (ver src/lib/site.ts)
+const WEBHOOK_URL = SITE.webhooks.joinUs;
 
 export default function JoinWaitlistModal({ isOpen, onClose }: JoinWaitlistModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);

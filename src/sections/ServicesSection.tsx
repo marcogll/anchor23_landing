@@ -1,17 +1,55 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useLanguage } from '../hooks/useLanguage';
+import { useServices } from '../hooks/useServices';
+import { formatDuration, formatPriceMXN, normalizeServiceName } from '../lib/servicesApi';
 
 gsap.registerPlugin(ScrollTrigger);
 
+interface CatalogItem {
+  title: string;
+  desc: string;
+  price: string;
+  duration: string;
+}
+
 export default function ServicesSection() {
   const { t } = useLanguage();
+  const { catalog } = useServices();
   const sectionRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
-  const items = (t('catalog.items') as unknown) as { title: string; desc: string; price: string; duration: string }[];
+  const baseItems = (t('catalog.items') as unknown) as CatalogItem[];
+
+  // Precio y duración mandan desde Supabase (match por nombre). Los servicios
+  // de DB sin equivalente en el idioma actual se agregan con su texto de DB.
+  const items: CatalogItem[] = useMemo(() => {
+    if (!catalog) return baseItems;
+    const byName = new Map(catalog.services.map((s) => [normalizeServiceName(s.name), s]));
+    const matched = new Set<string>();
+    const merged = baseItems.map((item) => {
+      const svc = byName.get(normalizeServiceName(item.title));
+      if (!svc) return item;
+      matched.add(svc.id);
+      return {
+        ...item,
+        price: formatPriceMXN(svc.price_cents),
+        duration: formatDuration(svc.duration_minutes),
+      };
+    });
+    for (const svc of catalog.services) {
+      if (matched.has(svc.id)) continue;
+      merged.push({
+        title: svc.name,
+        desc: svc.description ?? '',
+        price: formatPriceMXN(svc.price_cents),
+        duration: formatDuration(svc.duration_minutes),
+      });
+    }
+    return merged;
+  }, [catalog, baseItems]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {

@@ -5,8 +5,9 @@ import Navigation from '../sections/Navigation';
 import MembershipsSection from '../sections/MembershipsSection';
 import Footer from '../sections/Footer';
 import { useLanguage } from '../hooks/useLanguage';
+import { SITE } from '../lib/site';
 
-const WEBHOOK_URL = 'https://flows.soul23.cloud/webhook/27xv9ojycsfzp7tepia4ewavq2c0uep427bkecb';
+const WEBHOOK_URL = SITE.webhooks.memberships;
 
 export default function Membresias() {
   useLenis();

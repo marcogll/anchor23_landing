@@ -5,8 +5,9 @@ import Navigation from '../sections/Navigation';
 import Footer from '../sections/Footer';
 import { MapPin, Phone, Mail, Clock } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
+import { SITE } from '../lib/site';
 
-const WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/placeholder-contacto/';
+const WEBHOOK_URL = SITE.webhooks.contact;
 
 export default function Contacto() {
   useLenis();
@@ -69,7 +70,7 @@ export default function Contacto() {
               </div>
             </div>
             <div className="text-center mt-10">
-              <a href="https://booking.anchor23.mx" className="inline-block font-display text-[14px] tracking-[2px] uppercase text-cream bg-charcoal px-10 py-4 hover:bg-earth transition-colors duration-300">{t('contacto.bookCta') as string}</a>
+              <a href={SITE.bookingUrl} className="inline-block font-display text-[14px] tracking-[2px] uppercase text-cream bg-charcoal px-10 py-4 hover:bg-earth transition-colors duration-300">{t('contacto.bookCta') as string}</a>
             </div>
           </div>
         </section>
